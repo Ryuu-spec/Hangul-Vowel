@@ -347,7 +347,7 @@ function decompose(kor){
   return res;
 }
 
-const EP='https://hangul-vowel.vercel.app/api/gemini';
+const EP='/api/gemini';
 async function gemini(prompt){
   const r=await fetch(EP,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
   if(!r.ok)throw new Error('API 오류');
