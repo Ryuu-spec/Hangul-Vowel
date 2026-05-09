@@ -10,7 +10,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
 :root{
-  --cream:#F9F6F0;--navy:#1A243B;--red:#A72B20;
+  --cream:#fcf9f3;--navy:#1A243B;--red:#A72B20;
   --primary:#f1b055;--muted:#767872;--gold:#C8A97E;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -135,7 +135,7 @@ body{display:flex;align-items:center;justify-content:center;font-family:'Noto Se
 
 #cap{
   position:fixed;top:-9999px;left:-9999px;
-  width:1080px;height:1080px;background:#F9F6F0;
+  width:1080px;height:1080px;background:#fcf9f3;
   font-family:'Noto Serif KR',serif;
 }
 </style>
@@ -299,7 +299,7 @@ body{display:flex;align-items:center;justify-content:center;font-family:'Noto Se
 </div>
 
 <!-- ════ 캡처 카드 (1080×1080) ════ -->
-<div id="cap" style="position:fixed;top:-9999px;left:-9999px;width:1080px;height:1080px;background:#F9F6F0;font-family:'Noto Serif KR',serif;">
+<div id="cap" style="position:fixed;top:-9999px;left:-9999px;width:1080px;height:1080px;background:#fcf9f3;font-family:'Noto Serif KR',serif;">
   <div style="position:absolute;top:48px;left:48px;width:24px;height:24px;border-top:1px solid rgba(200,169,126,.4);border-left:1px solid rgba(200,169,126,.4);"></div>
   <div style="position:absolute;top:48px;right:48px;width:24px;height:24px;border-top:1px solid rgba(200,169,126,.4);border-right:1px solid rgba(200,169,126,.4);"></div>
   <div style="position:absolute;bottom:48px;left:48px;width:24px;height:24px;border-bottom:1px solid rgba(200,169,126,.4);border-left:1px solid rgba(200,169,126,.4);"></div>
@@ -752,10 +752,10 @@ async function saveCard(){
   btn.textContent='저장 중…'; btn.disabled=true;
   try{
     const card=document.getElementById('cap');
-    card.style.cssText='position:absolute;top:0;left:0;width:1080px;height:1080px;background:#F9F6F0;font-family:Noto Serif KR,serif;';
+    card.style.cssText='position:absolute;top:0;left:0;width:1080px;height:1080px;background:#fcf9f3;font-family:Noto Serif KR,serif;';
     await sleep(250);
-    const canvas=await html2canvas(card,{backgroundColor:'#F9F6F0',scale:1,useCORS:true,width:1080,height:1080});
-    card.style.cssText='position:fixed;top:-9999px;left:-9999px;width:1080px;height:1080px;background:#F9F6F0;font-family:Noto Serif KR,serif;';
+    const canvas=await html2canvas(card,{backgroundColor:'#fcf9f3',scale:1,useCORS:true,width:1080,height:1080});
+    card.style.cssText='position:fixed;top:-9999px;left:-9999px;width:1080px;height:1080px;background:#fcf9f3;font-family:Noto Serif KR,serif;';
     const a=document.createElement('a');
     a.download=`${curKor}-한글코드-1080x1080.png`;
     a.href=canvas.toDataURL('image/png');
