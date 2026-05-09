@@ -25,23 +25,19 @@ body{display:flex;align-items:center;justify-content:center;font-family:'Noto Se
 .pg{display:none;position:absolute;inset:0;flex-direction:column;}
 .pg.on{display:flex;}
 
-/* 버튼 */
 .btn{width:100%;height:56px;border:none;font-family:'Playfair Display',serif;font-size:16px;font-weight:700;letter-spacing:3px;text-transform:uppercase;cursor:pointer;transition:opacity .2s;}
 .btn-dark{background:#1c1c18;color:#fff;}
 .btn-gold{background:var(--primary);color:#fff;}
 .btn:hover{opacity:.85;}
 .btn:disabled{opacity:.4;cursor:not-allowed;}
 
-/* 이름 입력 */
 .ni{border:none;border-bottom:1.5px solid var(--primary);background:transparent;font-size:28px;text-align:center;color:#1c1c18;padding:10px 0;width:100%;outline:none;font-family:'Noto Serif KR',serif;}
 .ni::placeholder{color:var(--muted);opacity:.5;}
 
-/* 로딩 */
 @keyframes lp{0%,100%{opacity:1;}50%{opacity:.25;}}
 .lc span{display:inline-block;animation:lp 1.5s ease-in-out infinite;}
 .lc span:nth-child(odd){animation-delay:.35s;}
 
-/* ── 언어 선택 카드 ── */
 .pick-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 20px;}
 .pick-card{
   border:1px solid rgba(200,169,126,.3);
@@ -76,7 +72,6 @@ body{display:flex;align-items:center;justify-content:center;font-family:'Noto Se
   color:rgba(118,120,114,.6);letter-spacing:.05em;
 }
 
-/* 단일 옵션일 때 카드 */
 .pick-single{
   margin:0 20px;
   border:2px solid var(--primary);
@@ -86,7 +81,6 @@ body{display:flex;align-items:center;justify-content:center;font-family:'Noto Se
   background:#fffaf3;
 }
 
-/* 애니메이션 */
 #pg-anim{background:#fcf9f3;align-items:center;justify-content:center;}
 .hangeul-grid{
   background-image:radial-gradient(#e5e2dc 1px,transparent 1px);
@@ -131,7 +125,6 @@ body{display:flex;align-items:center;justify-content:center;font-family:'Noto Se
 }
 #anim-flash.on{animation:flash .5s ease-out forwards;}
 
-/* 결과 */
 #pg-result{background:#fcf9f3;justify-content:space-between;padding:40px 32px;}
 .heritage-seal{
   background:#A72B20;color:#F9F6F0;border-radius:2px;
@@ -140,7 +133,6 @@ body{display:flex;align-items:center;justify-content:center;font-family:'Noto Se
   flex-shrink:0;margin-left:6px;margin-bottom:8px;align-self:flex-end;
 }
 
-/* 캡처 카드 */
 #cap{
   position:fixed;top:-9999px;left:-9999px;
   width:1080px;height:1080px;background:#F9F6F0;
@@ -211,7 +203,7 @@ body{display:flex;align-items:center;justify-content:center;font-family:'Noto Se
   </div>
 </div>
 
-<!-- ════ 4. 언어 선택 (AI 추천) ════ -->
+<!-- ════ 4. 언어 선택 ════ -->
 <div id="pg-pick" class="pg" style="justify-content:space-between;">
   <div style="padding:48px 24px 0;flex-shrink:0;">
     <p style="font-family:'Work Sans',sans-serif;font-size:9px;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);margin-bottom:20px;">Your name, decoded</p>
@@ -220,11 +212,7 @@ body{display:flex;align-items:center;justify-content:center;font-family:'Noto Se
     </h2>
     <p id="pick-subtitle" style="font-family:'Playfair Display',serif;font-size:13px;color:rgba(28,28,24,.45);font-style:italic;margin-top:6px;"></p>
   </div>
-
-  <!-- 카드 그리드 -->
-  <div id="pick-cards" style="flex:1;display:flex;align-items:center;width:100%;padding:24px 0;">
-  </div>
-
+  <div id="pick-cards" style="flex:1;display:flex;align-items:center;width:100%;padding:24px 0;"></div>
   <div style="padding:16px 20px 48px;flex-shrink:0;width:100%;">
     <button class="btn btn-dark" id="pick-btn" onclick="confirmPick()" disabled>Choose This Version</button>
   </div>
@@ -295,9 +283,7 @@ body{display:flex;align-items:center;justify-content:center;font-family:'Noto Se
       <div id="result-name" style="font-family:'Noto Serif KR',serif;font-weight:700;font-size:clamp(72px,18vw,110px);line-height:1;letter-spacing:-.03em;color:#121211;"></div>
       <div class="heritage-seal">印</div>
     </div>
-    <!-- 언어 버전 뱃지 -->
     <p id="result-lang-badge" style="display:none;"></p>
-    <!-- 개인화 카피 -->
     <p id="result-poem" style="font-family:'Noto Serif KR',serif;font-size:13px;line-height:1.85;color:rgba(18,18,17,.5);text-align:center;margin-top:14px;min-height:42px;letter-spacing:.02em;max-width:280px;opacity:0;transition:opacity .8s ease;"></p>
   </div>
   <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:8px;">
@@ -314,24 +300,18 @@ body{display:flex;align-items:center;justify-content:center;font-family:'Noto Se
 
 <!-- ════ 캡처 카드 (1080×1080) ════ -->
 <div id="cap" style="position:fixed;top:-9999px;left:-9999px;width:1080px;height:1080px;background:#F9F6F0;font-family:'Noto Serif KR',serif;">
-  <!-- 코너 장식 -->
   <div style="position:absolute;top:48px;left:48px;width:24px;height:24px;border-top:1px solid rgba(200,169,126,.4);border-left:1px solid rgba(200,169,126,.4);"></div>
   <div style="position:absolute;top:48px;right:48px;width:24px;height:24px;border-top:1px solid rgba(200,169,126,.4);border-right:1px solid rgba(200,169,126,.4);"></div>
   <div style="position:absolute;bottom:48px;left:48px;width:24px;height:24px;border-bottom:1px solid rgba(200,169,126,.4);border-left:1px solid rgba(200,169,126,.4);"></div>
   <div style="position:absolute;bottom:48px;right:48px;width:24px;height:24px;border-bottom:1px solid rgba(200,169,126,.4);border-right:1px solid rgba(200,169,126,.4);"></div>
-  <!-- 중앙 콘텐츠 블록 -->
   <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;width:900px;">
-    <!-- 이름 + 도장 -->
     <div style="display:inline-block;position:relative;margin-bottom:36px;padding-right:72px;">
       <div id="cap-name" style="font-family:'Noto Serif KR',serif;font-weight:700;font-size:180px;line-height:1;letter-spacing:-.03em;color:#121211;white-space:nowrap;display:inline-block;vertical-align:bottom;"></div>
       <div id="cap-seal" style="position:absolute;bottom:14px;right:0;background:#A72B20;color:#F9F6F0;border-radius:4px;width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:500;transform:rotate(1deg);">印</div>
     </div>
-    <!-- 구분선 -->
     <div style="width:40px;height:1px;background:rgba(200,169,126,.5);margin:0 auto 28px;"></div>
-    <!-- 개인화 카피 -->
     <div id="cap-poem" style="font-family:'Noto Serif KR',serif;font-size:30px;line-height:1.8;color:rgba(18,18,17,.45);letter-spacing:.04em;"></div>
   </div>
-  <!-- 하단 메타 -->
   <div style="position:absolute;bottom:72px;left:80px;right:80px;display:flex;justify-content:space-between;align-items:flex-end;">
     <div style="font-family:'Work Sans',sans-serif;font-size:20px;letter-spacing:.12em;color:rgba(18,18,17,.4);text-transform:uppercase;">SEOUL, KOREA / <span id="cap-yr"></span></div>
     <div style="font-family:'Work Sans',sans-serif;font-size:20px;letter-spacing:.1em;color:rgba(18,18,17,.25);text-transform:uppercase;">HelloEdu</div>
@@ -339,7 +319,6 @@ body{display:flex;align-items:center;justify-content:center;font-family:'Noto Se
 </div>
 
 <script>
-// ── 상태 ──────────────────────────────
 let curName='', curKor='', curLang='', curPoem='', curOptions=[], selectedIdx=-1;
 const sleep = ms => new Promise(r=>setTimeout(r,ms));
 const raf2  = ()  => new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
@@ -347,14 +326,12 @@ const raf2  = ()  => new Promise(r=>requestAnimationFrame(()=>requestAnimationFr
 const yr=new Date().getFullYear();
 ['yr1','yr2','cap-yr'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=yr;});
 
-// ── 화면 전환 ─────────────────────────
 function show(id){
   document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
   document.getElementById(id).classList.add('on');
 }
 function setN(n){document.getElementById('nf').value=n;}
 
-// ── 음절 분해 ─────────────────────────
 const ON=['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
 const VW=['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
 const CD=['','ㄱ','ㄲ','ㄳ','ㄴ','ㄵ','ㄶ','ㄷ','ㄹ','ㄺ','ㄻ','ㄼ','ㄽ','ㄾ','ㄿ','ㅀ','ㅁ','ㅂ','ㅄ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
@@ -370,7 +347,6 @@ function decompose(kor){
   return res;
 }
 
-// ── API 엔드포인트 ─────────────────────
 const EP='https://hangul-vowel.vercel.app/api/gemini';
 async function gemini(prompt){
   const r=await fetch(EP,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
@@ -380,6 +356,7 @@ async function gemini(prompt){
 }
 
 // ── KCISA 국립국어원 외래어 표기법 1순위 조회 ──
+// alternativeTitle이 입력 이름을 포함하는 항목만 사용 (엉뚱한 결과 방지)
 async function callKCSIA(name){
   try{
     const r=await fetch(`/api/kcisa?keyword=${encodeURIComponent(name)}&numOfRows=20`);
@@ -388,10 +365,16 @@ async function callKCSIA(name){
     const raw=data?.response?.body?.items?.item;
     if(!raw)return null;
     const list=Array.isArray(raw)?raw:[raw];
-    // language 필드 기준 중복 제거
     const seen=new Set();
     const options=list
-      .filter(i=>i.title&&i.language&&!seen.has(i.language)&&seen.add(i.language))
+      .filter(i=>
+        i.title &&
+        i.language &&
+        i.alternativeTitle &&
+        i.alternativeTitle.toLowerCase().includes(name.toLowerCase()) &&
+        !seen.has(i.language) &&
+        seen.add(i.language)
+      )
       .slice(0,4)
       .map(i=>({
         lang:i.language,
@@ -400,6 +383,7 @@ async function callKCSIA(name){
         korean:i.title,
         note:'국립국어원 외래어 표기법 공식 기준'
       }));
+    console.log(`[KCISA] "${name}" → ${options.length}개 매칭`);
     return options.length?options:null;
   }catch(e){
     console.warn('[KCISA] 조회 실패, Gemini로 폴백:',e.message);
@@ -409,11 +393,9 @@ async function callKCSIA(name){
 
 // ── Call 1: 언어 감지 ──────────────────
 async function callDetect(name){
-  // ★ 1순위: 국립국어원 공식 데이터
   const kcisa=await callKCSIA(name);
   if(kcisa)return{options:kcisa};
 
-  // 2순위: Gemini 언어 감지
   const prompt=`당신은 국립국어원 외래어 표기법 전문가이자 언어학자입니다.
 이름 "${name}"이 어느 문화권의 이름인지 분석하세요.
 
@@ -500,7 +482,6 @@ async function callPoem(name, lang, korean){
   return gemini(prompt);
 }
 
-// ── 로딩 셔플 ─────────────────────────
 const LC=[
   'ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ',
   'ㅏ','ㅑ','ㅓ','ㅕ','ㅗ','ㅛ','ㅜ','ㅠ','ㅡ','ㅣ'
@@ -510,36 +491,25 @@ function shuffleLC(){
   if(el)el.innerHTML=Array.from({length:6},()=>`<span>${LC[Math.floor(Math.random()*LC.length)]}</span>`).join('');
 }
 
-// ── 시 줄바꿈 포맷터 ──────────────────
 function formatPoem(text){
   if(!text)return'';
   if(text.length<=18)return text;
-
-  // 1순위: 주격조사 이/가 다음 공백 (예: "현명한 지혜가 한글의..." → "현명한 지혜가<br>한글의...")
   const igaMatch=text.match(/^(.+?[이가])\s+(.+)$/);
   if(igaMatch&&igaMatch[1].length>=4&&igaMatch[2].length>=4){
     return`${igaMatch[1]}<br>${igaMatch[2]}`;
   }
-
-  // 2순위: 쉼표
   const commaM=text.match(/^(.+?[,，])\s*(.+)$/);
   if(commaM&&commaM[1].length>=4&&commaM[2].length>=4){
     return`${commaM[1]}<br>${commaM[2]}`;
   }
-
-  // 3순위: '한글' 앞 공백
   const hangulM=text.match(/^(.+?)\s+(한글.+)$/);
   if(hangulM&&hangulM[1].length>=4&&hangulM[2].length>=4){
     return`${hangulM[1]}<br>${hangulM[2]}`;
   }
-
-  // 4순위: 목적격/처소격 조사 다음
   const josM=text.match(/^(.+?[을를속에의])\s+(.+)$/);
   if(josM&&josM[1].length>=4&&josM[2].length>=4){
     return`${josM[1]}<br>${josM[2]}`;
   }
-
-  // 최후: 중간 공백
   const mid=Math.floor(text.length/2);
   const spaces=[...text.matchAll(/\s+/g)].map(m=>({i:m.index,len:m[0].length}));
   if(spaces.length){
@@ -549,33 +519,25 @@ function formatPoem(text){
   return text;
 }
 
-// ── STEP 1: 언어 감지 ─────────────────
 async function detectLanguages(){
   const name=document.getElementById('nf').value.trim();
   if(!name)return;
   curName=name;
-
-  // 항상 pg-detect(점 세개)로 시작 — API 응답 후 분기
   const detectName=document.getElementById('detect-name');
   if(detectName) detectName.textContent=name;
   show('pg-detect');
-
   try{
     const res=await callDetect(name);
     curOptions=res.options||[];
     if(!curOptions.length)throw new Error('옵션 없음');
-
     if(curOptions.length===1){
-      // 단일 옵션: 점 세개 → 섹션 로딩(pg-load) 직행
       selectedIdx=0;
       await runProcess(curOptions[0]);
     } else {
-      // 복수 옵션: 점 세개 → 언어 선택(pg-pick)
       buildPickScreen();
       show('pg-pick');
     }
   }catch(e){
-    // 1회 자동 재시도
     try{
       const res2=await callDetect(name);
       curOptions=res2.options||[];
@@ -594,7 +556,6 @@ async function detectLanguages(){
   }
 }
 
-// ── 선택 화면 생성 ─────────────────────
 function buildPickScreen(){
   document.getElementById('pick-name-display').textContent=curName;
   const n=curOptions.length;
@@ -602,12 +563,10 @@ function buildPickScreen(){
     n===1
       ? 'One cultural origin was found for your name.'
       : `Your name lives in ${n} cultures. Choose your version.`;
-
   const container=document.getElementById('pick-cards');
   container.innerHTML='';
   selectedIdx=-1;
   document.getElementById('pick-btn').disabled=true;
-
   if(n===1){
     const opt=curOptions[0];
     container.style.flexDirection='column';
@@ -645,7 +604,6 @@ function selectCard(i){
   document.getElementById('pick-btn').disabled=false;
 }
 
-// ── STEP 2: 선택 확정 → 처리 ──────────
 async function confirmPick(){
   if(selectedIdx<0)return;
   await runProcess(curOptions[selectedIdx]);
@@ -654,8 +612,6 @@ async function confirmPick(){
 async function runProcess(opt){
   curLang=opt.lang;
   curKor=opt.korean;
-
-  // 결과 화면 준비
   document.getElementById('result-name').textContent=curKor;
   const rLen=curKor.length;
   const rSize=rLen<=2?'clamp(72px,18vw,110px)':rLen<=4?'clamp(52px,13vw,80px)':'clamp(36px,9vw,56px)';
@@ -663,22 +619,17 @@ async function runProcess(opt){
   const capFontSize=(rLen<=2?180:rLen<=4?130:rLen<=6?100:80);
   document.getElementById('cap-name').style.fontSize=capFontSize+'px';
   document.getElementById('cap-name').textContent=curKor;
-  // 도장 위치: 폰트 크기에 비례해서 마지막 글자 아래쪽에 오도록
   const capSeal=document.getElementById('cap-seal');
   if(capSeal) capSeal.style.bottom=Math.round(capFontSize*0.08)+'px';
   document.getElementById('result-lang-badge').textContent=(opt.nativeLabel||opt.lang||'')+ ' version';
   document.getElementById('result-poem').style.opacity='0';
   document.getElementById('result-poem').textContent='';
-
-  // ── 자모 깜박임 로딩 시작 ──
   show('pg-load');
   const msgs=['Assembling identity...','Reading the strokes...','Finding your essence...'];
   let mi=0;
   const ct=setInterval(shuffleLC,160);
   const mt=setInterval(()=>{const e=document.getElementById('lt');if(e)e.textContent=msgs[++mi%msgs.length];},900);
-
   try{
-    // poem 생성 — 실패시 1회 재시도, 그래도 실패시 폴백
     const FALLBACK_POEMS={
       '영어':'이름에 깃든 기운이 한글의 결을 따라 흐릅니다.',
       '프랑스어':'우아한 정신이 한글 획 속에 조용히 새겨집니다.',
@@ -693,7 +644,6 @@ async function runProcess(opt){
     try{
       poemRes=await callPoem(curName, curLang, curKor);
       curPoem=poemRes.poem||'';
-      // 빈값이면 1회 재시도
       if(!curPoem){
         poemRes=await callPoem(curName, curLang, curKor);
         curPoem=poemRes.poem||'';
@@ -707,27 +657,21 @@ async function runProcess(opt){
         curPoem='';
       }
     }
-    // 그래도 빈값이면 폴백 사용
     if(!curPoem) curPoem=FALLBACK_POEMS[curLang]||'이름에 깃든 기운이 한글의 결을 따라 흐릅니다.';
-
     clearInterval(ct); clearInterval(mt);
     show('pg-anim');
     await sleep(200);
     await runAnimation(decompose(curKor));
-
     const fl=document.getElementById('anim-flash');
     fl.classList.add('on');
     await sleep(500);
     show('pg-result');
     fl.classList.remove('on');
-
-    // poem 항상 표시
     const pEl=document.getElementById('result-poem');
     pEl.innerHTML=formatPoem(curPoem);
     document.getElementById('cap-poem').textContent=curPoem;
     await sleep(300);
     pEl.style.opacity='1';
-
   }catch(e){
     clearInterval(ct); clearInterval(mt);
     show('pg-pick');
@@ -735,18 +679,14 @@ async function runProcess(opt){
   }
 }
 
-// ── 다른 버전 시도 ─────────────────────
 function tryAnother(){
   if(curOptions.length>1){
-    // 다른 언어 옵션이 있으면 선택 화면으로
     show('pg-pick');
   } else {
-    // 없으면 이름 입력으로
     startOver();
   }
 }
 
-// ── 자모 결합 애니메이션 ──────────────
 async function runAnimation(syllables){
   for(let i=0;i<syllables.length;i++){
     await animSyllable(syllables[i]);
@@ -799,7 +739,6 @@ async function animSyllable(syl){
   await sleep(900);
 }
 
-// ── TTS ───────────────────────────────
 function playTTS(){
   if(!curKor)return;
   const u=new SpeechSynthesisUtterance(curKor);
@@ -808,7 +747,6 @@ function playTTS(){
   window.speechSynthesis.speak(u);
 }
 
-// ── 저장 ──────────────────────────────
 async function saveCard(){
   const btn=document.getElementById('sb');
   btn.textContent='저장 중…'; btn.disabled=true;
@@ -826,7 +764,6 @@ async function saveCard(){
   btn.textContent='저장하기'; btn.disabled=false;
 }
 
-// ── 처음으로 ──────────────────────────
 function startOver(){
   curName=''; curKor=''; curLang=''; curPoem=''; curOptions=[]; selectedIdx=-1;
   document.getElementById('nf').value='';
