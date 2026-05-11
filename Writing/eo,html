@@ -2,29 +2,22 @@
 <html lang="ko"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 html,body{width:100%;height:100%;background:transparent}
 body{display:flex;align-items:center;justify-content:center}
-.card{background:white;border-radius:20px;padding:20px 16px 14px;display:flex;flex-direction:column;align-items:center;gap:8px;box-shadow:0 4px 24px rgba(0,0,0,.1);cursor:pointer;user-select:none;width:90%;max-width:200px;transition:transform .15s,box-shadow .15s}
+.card{background:white;border-radius:20px;padding:20px 16px;display:flex;flex-direction:column;align-items:center;gap:8px;box-shadow:0 4px 24px rgba(0,0,0,.1);cursor:pointer;user-select:none;width:90%;max-width:200px;transition:transform .15s,box-shadow .15s}
 .card:hover{transform:translateY(-3px);box-shadow:0 10px 32px rgba(0,0,0,.14)}
-.ch{font-size:36px;font-weight:800;color:#1E293B;font-family:'Noto Sans KR',sans-serif;line-height:1}
-.ro{font-size:13px;color:#94A3B8;font-family:'Courier New',monospace}
 .dots{display:flex;gap:5px}
 .dot{width:6px;height:6px;border-radius:50%;background:#E2E8F0;transition:background .3s}
-.hint{font-size:10px;color:#CBD5E1;margin-top:2px}
 </style></head>
 <body>
 <div class="card" id="c">
-<svg id="s" viewBox="0 0 100 100" width="100" height="100" style="overflow:visible">
+<svg id="s" viewBox="0 0 100 100" width="110" height="110" style="overflow:visible">
 <line x1="50" y1="5" x2="50" y2="95" stroke="#F1F5F9" stroke-width="1"/>
 <line x1="5" y1="50" x2="95" y2="50" stroke="#F1F5F9" stroke-width="1"/>
 </svg>
-<div class="ch">ㅓ</div>
-<div class="ro">[eo]</div>
 <div class="dots" id="d"></div>
-<div class="hint">Tap &amp; Replay</div>
 </div>
 <script>
 var S=['M 24,50 L 50,50', 'M 50,10 L 50,90'];
