@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:transparent}
+body{display:flex;align-items:center;justify-content:center}
+.card{background:white;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;box-shadow:0 4px 24px rgba(0,0,0,.1);cursor:pointer;user-select:none;width:100%;height:100%;padding:8%}
+svg{width:100%;height:auto;flex:1;min-height:0;overflow:visible}
+.dots{display:flex;gap:4px;flex-shrink:0}
+.dot{width:6px;height:6px;border-radius:50%;background:#E2E8F0;transition:background .3s}
+</style></head>
+<body>
+<div class="card" id="c">
+<svg id="s" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet">
+<line x1="50" y1="5" x2="50" y2="95" stroke="#F1F5F9" stroke-width="1"/>
+<line x1="5" y1="50" x2="95" y2="50" stroke="#F1F5F9" stroke-width="1"/>
+</svg>
+<div class="dots" id="d"></div>
+</div>
+<script>
+var S=['M 12,50 L 88,50', 'M 35,15 L 35,50', 'M 65,15 L 65,50'];
+var BADGE=[{'x': 6, 'y': 42}, {'x': 22, 'y': 6}, {'x': 67, 'y': 6}];
+var C=['#E84855','#4A90D9','#43B047'];
+var sv=document.getElementById('s'),dt=document.getElementById('d'),ps=[];
+S.forEach(function(d,i){
+  var p=document.createElementNS('http://www.w3.org/2000/svg','path');
+  p.setAttribute('d',d);p.setAttribute('fill','none');p.setAttribute('stroke','#CBD5E1');
+  p.setAttribute('stroke-width','7');p.setAttribute('stroke-linecap','round');
+  p.setAttribute('stroke-linejoin','round');
+  sv.appendChild(p);ps.push(p);
+  var dot=document.createElement('div');dot.className='dot';dt.appendChild(dot);
+});
+function bp(d,i){return BADGE[i]||{x:50,y:50};}
+var tm=[];
+function play(){
+  tm.forEach(clearTimeout);tm=[];
+  sv.querySelectorAll('.b').forEach(function(e){e.remove();});
+  dt.querySelectorAll('.dot').forEach(function(d){d.style.background='#E2E8F0';});
+  ps.forEach(function(p){var l=p.getTotalLength();p.style.transition='none';p.style.strokeDasharray=l;p.style.strokeDashoffset=l;p.style.stroke='#E2E8F0';});
+  var delay=80;
+  ps.forEach(function(p,i){
+    var c=C[i%C.length];
+    tm.push(setTimeout(function(){p.style.stroke=c;p.style.transition='stroke-dashoffset 520ms cubic-bezier(0.4,0,0.6,1)';p.style.strokeDashoffset=0;},delay));
+    tm.push(setTimeout(function(){
+      p.style.transition='stroke .4s ease';p.style.stroke='#334155';
+      var pos=bp(S[i],i),g=document.createElementNS('http://www.w3.org/2000/svg','g');g.classList.add('b');
+      var ci=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      ci.setAttribute('cx',pos.x);ci.setAttribute('cy',pos.y);ci.setAttribute('r',7.5);ci.setAttribute('fill',c);
+      var tx=document.createElementNS('http://www.w3.org/2000/svg','text');
+      tx.setAttribute('x',pos.x);tx.setAttribute('y',pos.y+3.8);tx.setAttribute('text-anchor','middle');
+      tx.setAttribute('fill','white');tx.setAttribute('font-size','8.5');tx.setAttribute('font-weight','bold');tx.setAttribute('font-family','system-ui');tx.textContent=i+1;
+      g.appendChild(ci);g.appendChild(tx);sv.appendChild(g);
+      dt.querySelectorAll('.dot')[i].style.background=c;
+    },delay+520));
+    delay+=700;
+  });
+}
+document.getElementById('c').addEventListener('click',play);
+setTimeout(play,500);
+</script></body></html>
