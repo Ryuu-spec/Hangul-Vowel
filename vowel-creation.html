@@ -23,10 +23,7 @@
             user-select: none;
         }
 
-        /* ── 반응형 핵심: vmin 기반 스케일 ── */
-        :root {
-            --s: 1vmin;           /* 기본 스케일 단위 */
-        }
+        :root { --s: 1vmin; }
 
         .universe-bg {
             position: fixed;
@@ -39,7 +36,6 @@
         .bg-dark     { background: linear-gradient(to bottom, #e8eef5, #d4e0ec, #fdf8f0); }
         .bg-neutral  { background: linear-gradient(to bottom, #eef2e8, #dde8d4, #fdf8f0); }
 
-        /* ── 레이아웃 ── */
         #app {
             position: relative;
             z-index: 10;
@@ -51,7 +47,6 @@
             gap: clamp(2px, 0.8vmin, 8px);
         }
 
-        /* ── 헤더 ── */
         #app > header {
             flex: 0 0 auto;
             text-align: center;
@@ -75,7 +70,6 @@
             margin: 0;
         }
 
-        /* ── 원소 카드 행 ── */
         .elements-row {
             display: flex;
             justify-content: center;
@@ -129,7 +123,6 @@
             white-space: nowrap;
         }
 
-        /* ── 메인 (드롭존) ── */
         #app > main {
             flex: 1 1 0;
             min-height: 0;
@@ -161,7 +154,6 @@
             border-color: rgba(0,0,0,0.3);
         }
 
-        /* ── 드롭존 내부 ── */
         .visual-layer {
             position: absolute;
             inset: 0;
@@ -281,7 +273,6 @@
             transition: opacity 0.3s;
         }
 
-        /* ── 푸터 ── */
         #app > footer {
             flex: 0 0 auto;
             background: rgba(255,255,255,0.85);
@@ -356,7 +347,6 @@
         }
         #reset-btn:hover { background: rgba(0,0,0,0.1); }
 
-        /* ── 드래그 고스트 ── */
         #drag-icon {
             position: fixed;
             pointer-events: none;
@@ -373,7 +363,6 @@
 
 <div id="app">
 
-    <!-- ── 헤더 ── -->
     <header>
         <h1>Build a Vowel</h1>
         <p>천지인 (Heaven · Earth · Human)</p>
@@ -394,7 +383,6 @@
         </div>
     </header>
 
-    <!-- ── 메인 ── -->
     <main>
         <div id="drop-zone">
             <div class="visual-layer" id="visual-container">
@@ -419,7 +407,6 @@
         <div id="status-msg"></div>
     </main>
 
-    <!-- ── 푸터 ── -->
     <footer>
         <div class="footer-top">
             <span>Inventory</span>
@@ -439,21 +426,24 @@
 </div>
 
 <script>
-    const dropZone    = document.getElementById('drop-zone');
-    const dragIcon    = document.getElementById('drag-icon');
-    const universe    = document.getElementById('universe');
+    const dropZone      = document.getElementById('drop-zone');
+    const dragIcon      = document.getElementById('drag-icon');
+    const universe      = document.getElementById('universe');
     const resultDisplay = document.getElementById('result-display');
-    const recipeHint  = document.getElementById('recipe-hint');
-    const statusMsg   = document.getElementById('status-msg');
-    const previewChar = document.getElementById('preview-char');
-    const vHuman      = document.getElementById('visual-human');
-    const vEarth      = document.getElementById('visual-earth');
+    const recipeHint    = document.getElementById('recipe-hint');
+    const statusMsg     = document.getElementById('status-msg');
+    const previewChar   = document.getElementById('preview-char');
+    const vHuman        = document.getElementById('visual-human');
+    const vEarth        = document.getElementById('visual-earth');
 
     let baseElement = null;
     let collectedVowels = new Set();
     let isDragging  = false;
     let activeType  = null;
     let resultTimer = null;
+
+    // ── 수정 ③: 자동 리셋 시간 2500 → 4000ms ──
+    const AUTO_RESET_MS = 4000;
 
     const results = {
         'ㅏ': { char: 'ㅏ', theme: 'bright',  dotPos: { left: '67%', top: '50%' }, desc: 'Heaven shines to the RIGHT of Human' },
@@ -463,6 +453,13 @@
         'ㅡ': { char: 'ㅡ', theme: 'neutral', dotPos: null,                         desc: 'The flat Earth'                       },
         'ㅣ': { char: 'ㅣ', theme: 'neutral', dotPos: null,                         desc: 'A standing Human'                     }
     };
+
+    // ── 수정 ②: dot 완전 초기화 헬퍼 함수 ──
+    function resetDot() {
+        const dot = document.getElementById('visual-dot');
+        dot.className = '';
+        dot.style.cssText = 'opacity:0; transition:none; left:50%; top:5%;';
+    }
 
     /* ── 드래그 ── */
     document.querySelectorAll('.element-card').forEach(card => {
@@ -556,16 +553,16 @@
                 vHuman.classList.remove('show');
                 vEarth.classList.remove('show');
                 showVowel(result);
-                resultTimer = setTimeout(clearSelection, 2500);
+                // 수정 ③: AUTO_RESET_MS 사용
+                resultTimer = setTimeout(clearSelection, AUTO_RESET_MS);
             }, 800);
             return;
         }
 
+        // 수정 ②: resetDot() 헬퍼 사용
+        resetDot();
+
         const dot = document.getElementById('visual-dot');
-        dot.className = '';
-        dot.style.left    = '50%';
-        dot.style.top     = '5%';
-        dot.style.opacity = '0';
 
         requestAnimationFrame(() => requestAnimationFrame(() => {
             dot.style.transition = 'left 0.65s cubic-bezier(0.34,1.2,0.64,1), top 0.65s cubic-bezier(0.34,1.2,0.64,1)';
@@ -575,12 +572,13 @@
         }));
 
         resultTimer = setTimeout(() => {
-            dot.style.opacity    = '0';
-            dot.style.transition = 'opacity 0.3s';
+            // 수정 ②: dot 완전 초기화
+            resetDot();
             vHuman.classList.remove('show');
             vEarth.classList.remove('show');
             showVowel(result);
-            resultTimer = setTimeout(clearSelection, 2500);
+            // 수정 ③: AUTO_RESET_MS 사용
+            resultTimer = setTimeout(clearSelection, AUTO_RESET_MS);
         }, 1800);
     }
 
@@ -611,10 +609,8 @@
         universe.className = 'universe-bg bg-default';
         vHuman.classList.remove('show');
         vEarth.classList.remove('show');
-        const dot = document.getElementById('visual-dot');
-        dot.className = '';
-        dot.style.opacity    = '0';
-        dot.style.transition = 'none';
+        // 수정 ②: resetDot() 헬퍼 사용
+        resetDot();
     }
 
     function resetGame() {
