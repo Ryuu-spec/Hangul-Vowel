@@ -1,10 +1,16 @@
 // api/kcisa.js — Vercel Serverless Function
-// KCISA 외래어 표기법 API 프록시
+// KCISA 외래어 표기법 API 프록시 (Upstash Redis 캐싱 적용)
 // 환경변수: KCISA_SERVICE_KEY (Vercel 대시보드에서 설정)
+//           KV_REST_API_URL, KV_REST_API_TOKEN (Vercel Storage 연동 시 자동 생성)
 //
 // 호출 원본: https://api.kcisa.kr/openapi/service/rest/meta6/getKRAG0401
 // 파라미터 : serviceKey, keyword, numOfRows, pageNo
 // 응답 형식: JSON (Accept: application/json)
+
+import { Redis } from "@upstash/redis";
+
+const redis = Redis.fromEnv();
+const CACHE_TTL_SECONDS = 60 * 60 * 24 * 30; // 30일
 
 export default async function handler(req, res) {
   // CORS 허용 (같은 Vercel 도메인에서 호출)
@@ -29,6 +35,25 @@ export default async function handler(req, res) {
   if (!keyword.trim()) {
     return res.status(400).json({ error: "keyword 파라미터가 필요합니다." });
   }
+
+  const cacheKey = `kcisa:${keyword.toLowerCase()}`;
+
+  try {
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      res.setHeader("X-Cache", "HIT");
+      res.setHeader("Content-Type", cached.contentType);
+      if (cached.contentType === "text/xml") {
+        return res.status(200).send(cached.body);
+      }
+      return res.status(200).json(cached.body);
+    }
+  } catch (err) {
+    console.error("[kcisa redis get error]", err);
+    // 캐시 조회 실패 시 원본 API 호출로 폴백
+  }
+
+  res.setHeader("X-Cache", "MISS");
 
   const serviceKey = process.env.KCISA_SERVICE_KEY;
   if (!serviceKey) {
@@ -63,10 +88,12 @@ export default async function handler(req, res) {
     // JSON 파싱 시도 (실패 시 XML일 가능성 — 그대로 반환)
     try {
       const json = JSON.parse(body);
+      await redis.set(cacheKey, { contentType: "application/json", body: json }, { ex: CACHE_TTL_SECONDS });
       return res.status(200).json(json);
     } catch {
       // XML 응답이 온 경우 그대로 전달 (프론트에서 처리)
       res.setHeader("Content-Type", "text/xml");
+      await redis.set(cacheKey, { contentType: "text/xml", body }, { ex: CACHE_TTL_SECONDS });
       return res.status(200).send(body);
     }
 
