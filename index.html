@@ -525,8 +525,14 @@ function formatPoem(text){
 }
 
 async function detectLanguages(){
-  const name=document.getElementById('nf').value.trim();
+  let name=document.getElementById('nf').value.trim();
   if(!name)return;
+  if(/\s/.test(name)){
+    const firstWord=name.split(/\s+/)[0];
+    alert(`이름만 입력해 주세요. "${firstWord}"로 진행합니다.`);
+    name=firstWord;
+    document.getElementById('nf').value=name;
+  }
   curName=name;
   const detectName=document.getElementById('detect-name');
   if(detectName) detectName.textContent=name;
