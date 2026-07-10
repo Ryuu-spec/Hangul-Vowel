@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>청담대교 · Vowel Drag</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@900&family=Noto+Sans+KR:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+
+/* ── 반응형 CSS 변수 ── */
+:root{
+  --chip-size: clamp(46px, 8vw, 72px);
+  --chip-font: clamp(20px, 4vw, 32px);
+  --chip-gap:  clamp(5px, 1vw, 12px);
+  --tile-font: clamp(28px, 6vw, 56px);
+  --header-pad-y: clamp(8px, 1.5vh, 14px);
+  --header-pad-x: clamp(14px, 3vw, 28px);
+  --lm-name-size: clamp(15px, 2.8vw, 24px);
+  --lm-en-size:   clamp(11px, 1.6vw, 14px);
+  --inst-font:    clamp(11px, 1.8vw, 14px);
+  --prog-font:    clamp(11px, 1.6vw, 14px);
+  --prog-count-font: clamp(15px, 2.4vw, 22px);
+  --tile-gap:     clamp(6px, 1.2vw, 14px);
+  --tile-radius:  clamp(12px, 2vw, 22px);
+  --ghost-font:   clamp(36px, 6vw, 64px);
+  --comp-icon:    clamp(44px, 8vw, 72px);
+  --comp-title:   clamp(18px, 3.5vw, 32px);
+  --comp-sub:     clamp(12px, 1.8vw, 16px);
+}
+
+html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:#FFF8F2;overflow:hidden;}
+body{
+  display:flex;flex-direction:column;align-items:center;
+  width:100%;max-width:min(720px,100vw);
+  margin:0 auto;
+}
+
+/* ── HEADER ── */
+.header{
+  width:100%;background:#fff;border-bottom:2px solid #F0E6DA;
+  padding:var(--header-pad-y) var(--header-pad-x);
+}
+.lm-badge{
+  font-size:clamp(9px,1.4vw,12px);font-weight:700;
+  letter-spacing:1.5px;text-transform:uppercase;color:#C0714A;margin-bottom:2px;
+}
+.lm-name{font-size:var(--lm-name-size);font-weight:900;color:#1A1A1A;line-height:1.2;}
+.lm-name-row{display:flex;align-items:baseline;gap:clamp(4px,1vw,10px);flex-wrap:wrap;}
+.lm-sep{color:#D0C0B8;font-size:var(--lm-en-size);}
+.lm-en{font-size:var(--lm-en-size);color:#9B8880;font-weight:500;}
+
+/* ── INSTRUCTION ── */
+.instruction{padding:clamp(6px,1.2vh,12px) var(--header-pad-x);text-align:center;font-size:var(--inst-font);color:#666;font-weight:500;}
+
+/* ── CHIPS ── */
+.chip-tray{
+  width:100%;
+  padding:clamp(6px,1.2vh,12px) var(--header-pad-x) clamp(8px,1.5vh,14px);
+  display:flex;justify-content:center;
+  gap:var(--chip-gap);flex-wrap:wrap;
+  background:#fff;border-bottom:2px solid #F0E6DA;
+}
+.chip{
+  width:var(--chip-size);height:calc(var(--chip-size) * 1.07);
+  border-radius:clamp(8px,1.5vw,14px);
+  display:flex;align-items:center;justify-content:center;
+  font-size:var(--chip-font);font-weight:900;font-family:'Noto Serif KR',serif;
+  cursor:grab;user-select:none;touch-action:none;
+  box-shadow:0 3px 10px rgba(0,0,0,.1);border:2.5px solid transparent;
+  transition:transform .1s;
+}
+.chip:active{cursor:grabbing;transform:scale(1.06);}
+.chip[data-v="ㅏ"]{background:#FFF0EB;border-color:#F0A080;color:#C0714A;}
+.chip[data-v="ㅓ"]{background:#EBF3FF;border-color:#90B8F0;color:#2D6EC0;}
+.chip[data-v="ㅗ"]{background:#F3EBFF;border-color:#B090E8;color:#6B3DB8;}
+.chip[data-v="ㅜ"]{background:#EBFBF5;border-color:#70D8A8;color:#1A9060;}
+.chip[data-v="ㅡ"]{background:#FFF9EB;border-color:#E8C96A;color:#8A6A10;}
+.chip[data-v="ㅣ"]{background:#F0EBFF;border-color:#C0A0E8;color:#5A2DA0;}
+.chip[data-v="ㅐ"]{background:#FFEBF5;border-color:#F090C0;color:#B02070;}
+.chip[data-v="ㅔ"]{background:#EBF8FF;border-color:#70C8E8;color:#106090;}
+
+/* ── PROGRESS ── */
+.prog-row{
+  display:flex;align-items:center;justify-content:flex-end;
+  padding:clamp(4px,0.8vh,10px) var(--header-pad-x) 0;
+  width:100%;gap:6px;
+}
+.prog-label{font-size:var(--prog-font);color:#B8A8A0;font-weight:600;}
+.prog-count{
+  font-size:var(--prog-count-font);font-weight:900;color:#3DB87A;
+  font-variant-numeric:tabular-nums;
+  transition:transform .2s cubic-bezier(.175,.885,.32,1.4);
+}
+.prog-count.bump{transform:scale(1.35);}
+.prog-total{font-size:var(--prog-font);font-weight:700;color:#C8B8B0;}
+
+/* ── TILES ── */
+.tiles-wrap{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  padding:clamp(4px,1vh,12px) var(--header-pad-x);width:100%;
+  min-height:0;overflow:hidden;
+}
+.tiles-row{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  grid-template-rows:repeat(2,1fr);
+  gap:var(--tile-gap);
+  width:100%;max-width:min(560px,100%);
+  height:100%;
+}
+.tile{
+  border:2.5px solid #E8D8CE;
+  border-radius:var(--tile-radius);
+  background:#fff;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+  transition:background .2s,border-color .2s,transform .15s;
+  box-shadow:0 2px 8px rgba(0,0,0,.06);
+  overflow:hidden;
+}
+.tile-kr{
+  font-size:var(--tile-font);
+  font-weight:900;font-family:'Noto Serif KR',serif;
+  color:#2A1A12;line-height:1;
+  pointer-events:none;position:relative;z-index:1;
+}
+.tile.drag-over{border-color:#C0714A;background:#FFF4EE;transform:scale(1.06);}
+.tile.done{background:#F0FFF6;border-color:#3DB87A;pointer-events:none;}
+.tile.done .tile-kr{color:#1A5C3A;}
+.tile.wrong-flash{animation:tileWrong .45s ease;}
+@keyframes tileWrong{0%,100%{background:#fff;border-color:#E8D8CE;transform:scale(1);}30%{background:#FFF0F0;border-color:#F08080;transform:scale(.96);}60%{transform:scale(1.02);}}
+
+/* ── GHOST ── */
+#drag-ghost{
+  position:fixed;z-index:999;pointer-events:none;
+  font-size:var(--ghost-font);font-weight:900;font-family:'Noto Serif KR',serif;
+  line-height:1;
+  filter:drop-shadow(0 4px 10px rgba(0,0,0,.28));
+  opacity:0;
+  transform:translate(-50%,-50%) scale(1.15);
+}
+
+/* ── COMPLETE ── */
+.complete{display:none;position:fixed;inset:0;background:rgba(255,248,242,.95);flex-direction:column;align-items:center;justify-content:center;gap:clamp(8px,2vh,16px);z-index:500;}
+.complete.show{display:flex;}
+.comp-icon{font-size:var(--comp-icon);}
+.comp-title{font-size:var(--comp-title);font-weight:900;color:#1A1A1A;}
+.comp-sub{font-size:var(--comp-sub);color:#888;text-align:center;line-height:1.7;}
+.comp-btn{
+  margin-top:clamp(4px,1vh,10px);
+  background:#3DB87A;color:#fff;border:none;border-radius:16px;
+  padding:clamp(10px,1.5vh,16px) clamp(20px,4vw,40px);
+  font-size:clamp(13px,2vw,17px);font-weight:900;cursor:pointer;
+  font-family:'Noto Sans KR';box-shadow:0 4px 16px rgba(61,184,122,.4);
+}
+
+.confetti-piece{position:fixed;top:-20px;border-radius:3px;animation:fall linear forwards;z-index:600;}
+@keyframes fall{0%{transform:translateY(0) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="lm-badge">📍 Landmark 4 of 6</div>
+  <div class="lm-name-row">
+    <span class="lm-name">청담대교</span>
+    <span class="lm-sep">·</span>
+    <span class="lm-en">Cheongdam Bridge</span>
+  </div>
+</div>
+
+<div class="instruction">
+  Drag the correct vowel (ㅏ ㅓ ㅗ ㅜ ㅡ ㅣ ㅐ ㅔ) onto each character.
+</div>
+
+<div class="chip-tray">
+  <div class="chip" data-v="ㅏ">ㅏ</div>
+  <div class="chip" data-v="ㅓ">ㅓ</div>
+  <div class="chip" data-v="ㅗ">ㅗ</div>
+  <div class="chip" data-v="ㅜ">ㅜ</div>
+  <div class="chip" data-v="ㅡ">ㅡ</div>
+  <div class="chip" data-v="ㅣ">ㅣ</div>
+  <div class="chip" data-v="ㅐ">ㅐ</div>
+  <div class="chip" data-v="ㅔ">ㅔ</div>
+</div>
+
+<!-- Progress: number display -->
+<div class="prog-row">
+  <span class="prog-label">vowels found</span>
+  <span class="prog-count" id="prog-num">0</span>
+  <span class="prog-total" id="prog-total">/ 5</span>
+</div>
+
+<!-- Tiles: single row -->
+<div class="tiles-wrap">
+  <div class="tiles-row" id="tiles"></div>
+</div>
+
+<div id="drag-ghost"></div>
+
+<div class="complete" id="complete">
+  <div class="comp-icon">🎉</div>
+  <div class="comp-title">Well done!</div>
+  <div class="comp-sub">You found all the vowels in<br><strong>청담대교</strong></div>
+  <button class="comp-btn" onclick="restart()">Try again ↺</button>
+</div>
+
+<script>
+const ALL_V=['ㅏ','ㅐ','ㅑ','ㅒ','ㅓ','ㅔ','ㅕ','ㅖ','ㅗ','ㅘ','ㅙ','ㅚ','ㅛ','ㅜ','ㅝ','ㅞ','ㅟ','ㅠ','ㅡ','ㅢ','ㅣ'];
+const TARGET=new Set(['ㅏ','ㅓ','ㅗ','ㅜ','ㅡ','ㅣ','ㅐ','ㅔ']);
+const CHIP_COL={'ㅏ':'#C0714A','ㅓ':'#2D6EC0','ㅗ':'#6B3DB8','ㅜ':'#1A9060','ㅡ':'#8A6A10','ㅣ':'#5A2DA0','ㅐ':'#B02070','ㅔ':'#106090'};
+
+function getVowel(ch){
+  const c=ch.charCodeAt(0)-0xAC00;if(c<0||c>11171)return null;
+  const v=ALL_V[Math.floor((c%588)/28)];return TARGET.has(v)?v:null;
+}
+
+const WORD='청담대교';
+const CHARS=[...WORD];
+const TOTAL=CHARS.filter(ch=>getVowel(ch)).length;
+let doneCount=0;
+
+// Progress display
+const progNum=document.getElementById('prog-num');
+const progTotal=document.getElementById('prog-total');
+progTotal.textContent='/ '+TOTAL;
+
+function updateProgress(){
+  progNum.textContent=doneCount;
+  progNum.classList.remove('bump');
+  void progNum.offsetWidth;
+  progNum.classList.add('bump');
+  progNum.addEventListener('transitionend',()=>progNum.classList.remove('bump'),{once:true});
+}
+
+// Build tiles
+const tilesRow=document.getElementById('tiles');
+// Auto-fit grid layout to word length (template default was fixed 3×2 for 6 chars)
+const gCols=Math.ceil(Math.sqrt(CHARS.length)),gRows=Math.ceil(CHARS.length/gCols);
+tilesRow.style.gridTemplateColumns=`repeat(${gCols},1fr)`;
+tilesRow.style.gridTemplateRows=`repeat(${gRows},1fr)`;
+CHARS.forEach((ch,i)=>{
+  const vowel=getVowel(ch);
+  const tile=document.createElement('div');
+  tile.className='tile';
+  tile.dataset.idx=i;
+  tile.dataset.vowel=vowel||'';
+  const span=document.createElement('span');
+  span.className='tile-kr';span.textContent=ch;
+  tile.appendChild(span);
+  tilesRow.appendChild(tile);
+});
+
+// Drag
+let dragV=null,dragChipEl=null;
+const ghost=document.getElementById('drag-ghost');
+let currentOver=null,ghostAnimating=false;
+
+document.querySelectorAll('.chip').forEach(chip=>{
+  chip.addEventListener('pointerdown',e=>{
+    if(ghostAnimating)return;
+    e.preventDefault();
+    dragV=chip.dataset.v;dragChipEl=chip;
+    playChipSound(dragV);
+    ghost.textContent=dragV;
+    ghost.style.color=CHIP_COL[dragV];
+    ghost.style.transition='opacity .1s';
+    ghost.style.left=e.clientX+'px';ghost.style.top=e.clientY+'px';
+    ghost.style.opacity='1';
+    chip.setPointerCapture(e.pointerId);
+  });
+  chip.addEventListener('pointermove',e=>{
+    if(!dragV||ghostAnimating)return;
+    ghost.style.transition='none';
+    ghost.style.left=e.clientX+'px';ghost.style.top=e.clientY+'px';
+    ghost.style.visibility='hidden';
+    const el=document.elementFromPoint(e.clientX,e.clientY);
+    ghost.style.visibility='';
+    const tile=el?.closest('.tile');
+    if(currentOver&&currentOver!==tile)currentOver.classList.remove('drag-over');
+    if(tile&&!tile.classList.contains('done')){tile.classList.add('drag-over');currentOver=tile;}
+    else currentOver=null;
+  });
+  chip.addEventListener('pointerup',e=>{
+    if(!dragV){ghost.style.opacity='0';return;}
+    if(currentOver)currentOver.classList.remove('drag-over');
+    ghost.style.visibility='hidden';
+    const el=document.elementFromPoint(e.clientX,e.clientY);
+    ghost.style.visibility='';
+    const tile=el?.closest('.tile');
+    const v=dragV,chipSnap=dragChipEl;
+    dragV=null;currentOver=null;dragChipEl=null;
+    if(tile&&!tile.classList.contains('done')){
+      if(tile.dataset.vowel===v){ghost.style.transition='opacity .15s';ghost.style.opacity='0';onCorrect(tile,v);}
+      else onWrong(tile,chipSnap);
+    } else returnGhost(chipSnap);
+  });
+  chip.addEventListener('pointercancel',()=>{
+    const snap=dragChipEl;dragV=null;currentOver=null;dragChipEl=null;
+    if(snap)returnGhost(snap);else{ghost.style.transition='opacity .15s';ghost.style.opacity='0';}
+  });
+});
+
+function onCorrect(tile,v){
+  tile.classList.add('done');
+  doneCount++;updateProgress();
+  playTone('correct');
+  if(doneCount===TOTAL)setTimeout(()=>{spawnConfetti();document.getElementById('complete').classList.add('show');},600);
+}
+function onWrong(tile,chipEl){
+  playTone('wrong');
+  tile.classList.remove('wrong-flash');void tile.offsetWidth;
+  tile.classList.add('wrong-flash');
+  tile.addEventListener('animationend',()=>tile.classList.remove('wrong-flash'),{once:true});
+  ghostAnimating=true;
+  ghost.style.transition='none';
+  const gx=parseFloat(ghost.style.left);
+  const shakes=[14,-14,10,-10,6,-6,0];
+  shakes.forEach((dx,i)=>setTimeout(()=>{ghost.style.left=(gx+dx)+'px';},i*55));
+  setTimeout(()=>returnGhost(chipEl),shakes.length*55+20);
+}
+function returnGhost(chipEl){
+  const rect=chipEl.getBoundingClientRect();
+  ghost.style.transition='left .38s cubic-bezier(.68,-.55,.265,1.55),top .38s cubic-bezier(.68,-.55,.265,1.55),opacity .25s .18s';
+  ghost.style.left=(rect.left+rect.width/2)+'px';
+  ghost.style.top=(rect.top+rect.height/2)+'px';
+  ghost.style.opacity='0';
+  setTimeout(()=>{ghost.style.transition='opacity .1s';ghostAnimating=false;},450);
+}
+function restart(){
+  doneCount=0;progNum.textContent='0';
+  document.getElementById('complete').classList.remove('show');
+  document.querySelectorAll('.tile').forEach(t=>t.classList.remove('done','wrong-flash','drag-over'));
+}
+
+// Audio
+const CHIP_URLS = {
+  'ㅏ': 'https://ryuu-spec.github.io/Hangul-Vowel/audio/01_a.mp3',
+  'ㅓ': 'https://ryuu-spec.github.io/Hangul-Vowel/audio/02_eo.mp3',
+  'ㅗ': 'https://ryuu-spec.github.io/Hangul-Vowel/audio/03_o.mp3',
+  'ㅜ': 'https://ryuu-spec.github.io/Hangul-Vowel/audio/04_u.mp3',
+  'ㅡ': 'https://ryuu-spec.github.io/Hangul-Vowel/audio/05_eu.mp3',
+  'ㅣ': 'https://ryuu-spec.github.io/Hangul-Vowel/audio/06_i.mp3',
+  'ㅔ': 'https://ryuu-spec.github.io/Hangul-Vowel/audio/07_e.mp3',
+  'ㅐ': 'https://ryuu-spec.github.io/Hangul-Vowel/audio/08_ae.mp3'
+};
+const _decodedChip={};
+let _chipCtx=null;
+let _chipSrc=null;
+let _chipDecoded=false;
+
+function _getChipCtx(){
+  if(!_chipCtx) _chipCtx=new(window.AudioContext||window.webkitAudioContext)();
+  if(_chipCtx.state==='suspended') _chipCtx.resume();
+  return _chipCtx;
+}
+
+async function _preDecodeChip(){
+  if(_chipDecoded) return;
+  _chipDecoded=true;
+  const ctx=_getChipCtx();
+  for(const [v,url] of Object.entries(CHIP_URLS)){
+    try{
+      const res=await fetch(url);
+      const buf=await res.arrayBuffer();
+      _decodedChip[v]=await ctx.decodeAudioData(buf);
+    }catch(e){}
+  }
+}
+
+document.addEventListener('touchstart',_preDecodeChip,{once:true});
+document.addEventListener('click',_preDecodeChip,{once:true});
+_preDecodeChip();
+
+function playChipSound(v){
+  _preDecodeChip();
+  if(_decodedChip[v]){
+    try{
+      if(_chipSrc){try{_chipSrc.stop();}catch(e){} _chipSrc=null;}
+      const ctx=_getChipCtx();
+      const src=ctx.createBufferSource();
+      src.buffer=_decodedChip[v];
+      src.connect(ctx.destination);
+      src.start(0);
+      _chipSrc=src;
+    }catch(e){}
+    return;
+  }
+  // Fallback: HTML Audio
+  if(CHIP_URLS[v]){
+    const a=new Audio(CHIP_URLS[v]);
+    a.play().catch(()=>{});
+  }
+}
+let _ctx;function getCtx(){return _ctx||(_ctx=new(window.AudioContext||window.webkitAudioContext)());}
+function playTone(type){
+  try{
+    const ctx=getCtx(),g=ctx.createGain();g.connect(ctx.destination);
+    if(type==='correct'){[523,659,784].forEach((f,i)=>{const o=ctx.createOscillator();o.connect(g);o.frequency.value=f;g.gain.setValueAtTime(.14,ctx.currentTime+i*.1);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+i*.1+.25);o.start(ctx.currentTime+i*.1);o.stop(ctx.currentTime+i*.1+.25);});}
+    else{const o=ctx.createOscillator();o.type='sawtooth';o.frequency.value=150;o.connect(g);g.gain.setValueAtTime(.08,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.001,ctx.currentTime+.22);o.start(ctx.currentTime);o.stop(ctx.currentTime+.22);}
+  }catch(e){}
+}
+function spawnConfetti(){
+  const cols=['#FFD700','#FF6B6B','#4ECDC4','#C0714A','#96CEB4','#FF9FF3'];
+  for(let i=0;i<55;i++){const el=document.createElement('div');el.className='confetti-piece';el.style.cssText='left:'+Math.random()*100+'vw;background:'+cols[Math.floor(Math.random()*6)]+';animation-delay:'+Math.random()+'s;animation-duration:'+(2+Math.random())+'s;width:'+(6+Math.random()*7)+'px;height:'+(10+Math.random()*7)+'px;';document.body.appendChild(el);el.addEventListener('animationend',()=>el.remove());}
+}
+</script>
+</body>
+</html>
