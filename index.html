@@ -432,7 +432,12 @@ async function callDetect(name){
 지원 언어: 영어, 프랑스어, 독일어, 스페인어, 이탈리아어, 포르투갈어, 러시아어, 일본어, 베트남어, 태국어, 인도네시아어, 필리핀어, 아랍어, 터키어, 힌디어
 
 반드시 아래 JSON만 응답(마크다운 없이):
-{"options":[{"lang":"영어","nativeLabel":"English","native":"Michael","korean":"마이클","note":"영미권 발음 기준"},{"lang":"독일어","nativeLabel":"Deutsch","native":"Michael","korean":"미하엘","note":"ch=[ç] 독일어 발음 기준"}]}`;
+{"options":[{"lang":"영어","nativeLabel":"English","native":"Michael","korean":"마이클","note":"영미권 발음 기준"},{"lang":"독일어","nativeLabel":"Deutsch","native":"Michael","korean":"미하엘","note":"ch=[ç] 독일어 발음 기준"}]}
+
+[짧은 이름 예시 — 반드시 이 형식을 따르세요]
+입력 "An"에 대한 올바른 응답 예시:
+{"options":[{"lang":"베트남어","nativeLabel":"Tiếng Việt","native":"An","korean":"안","note":"베트남어 흔한 인명, 실제 발음 기준"}]}
+(지명 "시안", "란톈" 등을 언급하거나 연상하는 것은 완전히 잘못된 응답입니다)`;
   return gemini(prompt);
 }
 
