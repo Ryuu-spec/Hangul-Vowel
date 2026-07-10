@@ -362,10 +362,15 @@ async function callKCSIA(name){
     const r=await fetch(`/api/kcisa?keyword=${encodeURIComponent(name)}&numOfRows=20`);
     if(!r.ok)return null;
     const data=await r.json();
-    // 응답 items 위치는 API 버전에 따라 다를 수 있어 여러 경로를 방어적으로 확인
-    const raw = data?.items || data?.response?.body?.items?.item || data?.body?.items;
-    if(!raw)return null;
-    const list=Array.isArray(raw)?raw:[raw];
+    // 실제 응답 구조: data.response.items (배열이 한 겹 더 감싸져 있는 경우도 방어)
+    let raw = data?.response?.items ?? data?.items ?? data?.response?.body?.items?.item;
+    if(!raw){
+      console.warn('[국립국어원] items 경로를 찾지 못함. 응답 최상위 키:', Object.keys(data||{}), data?.response ? Object.keys(data.response) : null);
+      return null;
+    }
+    let list=Array.isArray(raw)?raw:[raw];
+    // items가 [[{...},{...}]] 처럼 이중 배열로 오는 경우 평탄화
+    if(list.length && Array.isArray(list[0])) list=list.flat();
 
     const nameLower=name.toLowerCase();
     const valid=i=>i.korean_mark && i.lang_nm && i.srclang_mark;
