@@ -391,8 +391,24 @@ async function callKCSIA(name){
   }
 }
 
+// ── 짧고 모호해 AI가 오작동하기 쉬운 이름은 사전 정의된 값으로 즉시 응답 ──
+// (지명 등으로 잘못 연상되는 걸 원천 차단)
+const SHORT_NAME_DICT = {
+  'an':  [{lang:'베트남어', nativeLabel:'Tiếng Việt', native:'An', korean:'안', note:'베트남어 흔한 인명'}],
+  'le':  [{lang:'베트남어', nativeLabel:'Tiếng Việt', native:'Le', korean:'레', note:'베트남어 성씨/인명'}],
+  'vu':  [{lang:'베트남어', nativeLabel:'Tiếng Việt', native:'Vu', korean:'부', note:'베트남어 성씨'}],
+  'ly':  [{lang:'베트남어', nativeLabel:'Tiếng Việt', native:'Ly', korean:'리', note:'베트남어 성씨'}],
+  'li':  [{lang:'중국어', nativeLabel:'中文', native:'Li', korean:'리', note:'중국어 흔한 성씨'}],
+  'wu':  [{lang:'중국어', nativeLabel:'中文', native:'Wu', korean:'우', note:'중국어 흔한 성씨'}],
+  'xu':  [{lang:'중국어', nativeLabel:'中文', native:'Xu', korean:'쉬', note:'중국어 흔한 성씨'}],
+  'ha':  [{lang:'베트남어', nativeLabel:'Tiếng Việt', native:'Ha', korean:'하', note:'베트남어 흔한 인명/성씨'}]
+};
+
 // ── Call 1: 언어 감지 ──────────────────
 async function callDetect(name){
+  const dictHit=SHORT_NAME_DICT[name.trim().toLowerCase()];
+  if(dictHit)return{options:dictHit};
+
   const kcisa=await callKCSIA(name);
   if(kcisa)return{options:kcisa};
 
