@@ -1,6 +1,6 @@
 // api/kcisa.js — Vercel Serverless Function
 // 국립국어원 "외래어·로마자 용례" 오픈 API 프록시 (Upstash Redis 캐싱 적용)
-// 환경변수: KOREAN_GO_SERVICE_KEY (Vercel 대시보드에서 설정)
+// 환경변수: KCISA_SERVICE_KEY (Vercel 대시보드에서 설정 — korean.go.kr에서 재발급받은 키를 등록)
 //           KV_REST_API_URL, KV_REST_API_TOKEN (Vercel Storage 연동 시 자동 생성)
 //
 // 호출 원본: https://korean.go.kr/kornorms/exampleReqList.do
@@ -47,9 +47,9 @@ export default async function handler(req, res) {
 
   res.setHeader("X-Cache", "MISS");
 
-  const serviceKey = process.env.KOREAN_GO_SERVICE_KEY;
+  const serviceKey = process.env.KCISA_SERVICE_KEY;
   if (!serviceKey) {
-    return res.status(500).json({ error: "KOREAN_GO_SERVICE_KEY 환경변수가 설정되지 않았습니다." });
+    return res.status(500).json({ error: "KCISA_SERVICE_KEY 환경변수가 설정되지 않았습니다." });
   }
 
   const numOfRows = req.query?.numOfRows || "10";
