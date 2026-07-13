@@ -451,18 +451,20 @@ async function callDetect(name){
    - 일본어: 헵번식 로마자 발음을 한국어 외래어 표기법으로 변환한 한글 (Haruki→하루키, Yuki→유키, Sakura→사쿠라)
    - 베트남어: 실제 발음 기준 한글 표기
 2. native: 그 언어에서 실제로 쓰는 원어 철자 (영어Michael, 스페인어Miguel, 프랑스어Michel, 독일어Michael, 일본어는 한자 표기 예: 春樹)
+   ※ 중요: 사용자가 어떤 언어의 철자를 입력하든 관계없이, 각 언어별로 그 언어에서 실제로
+   쓰이는 고유 철자를 출력해야 합니다. 예를 들어 "Michel"을 입력해도 영어는 Michael,
+   독일어는 Michael, 스페인어는 Miguel로 각각 다르게 출력해야 하며, 입력된 철자를
+   그대로 복사해서는 안 됩니다. (즉 native는 입력값 복사가 아니라 언어별 정본 철자입니다)
 3. nativeLabel: 그 언어의 자국어 명칭 (English, Deutsch, Español, Français, Italiano, Português, Русский, 日本語, Tiếng Việt, ภาษาไทย, Bahasa Indonesia, Filipino)
 4. note: 표기 근거 한 줄 (간결하게, 전문 용어 최소화)
 
 지원 언어: 영어, 프랑스어, 독일어, 스페인어, 이탈리아어, 포르투갈어, 러시아어, 일본어, 베트남어, 태국어, 인도네시아어, 필리핀어, 아랍어, 터키어, 힌디어
 
-반드시 아래 JSON만 응답(마크다운 없이):
+예시 1) 입력이 "Michael"인 경우 — 반드시 아래 JSON만 응답(마크다운 없이):
 {"options":[{"lang":"영어","nativeLabel":"English","native":"Michael","korean":"마이클","note":"영미권 발음 기준"},{"lang":"독일어","nativeLabel":"Deutsch","native":"Michael","korean":"미하엘","note":"ch=[ç] 독일어 발음 기준"}]}
 
-[짧은 이름 예시 — 반드시 이 형식을 따르세요]
-입력 "An"에 대한 올바른 응답 예시:
-{"options":[{"lang":"베트남어","nativeLabel":"Tiếng Việt","native":"An","korean":"안","note":"베트남어 흔한 인명, 실제 발음 기준"}]}
-(지명 "시안", "란톈" 등을 언급하거나 연상하는 것은 완전히 잘못된 응답입니다)`;
+예시 2) 입력이 "Michel"인 경우 (프랑스어 철자로 입력했더라도, 각 언어의 실제 정본 철자로 변환해야 함 — native를 입력값 그대로 복사하면 안 됨):
+{"options":[{"lang":"영어","nativeLabel":"English","native":"Michael","korean":"마이클","note":"영미권 발음 기준"},{"lang":"독일어","nativeLabel":"Deutsch","native":"Michael","korean":"미하엘","note":"ch=[ç] 독일어 발음 기준"},{"lang":"스페인어","nativeLabel":"Español","native":"Miguel","korean":"미겔","note":"mi-GEL 발음 기준"},{"lang":"프랑스어","nativeLabel":"Français","native":"Michel","korean":"미셸","note":"mi-SHEL 발음 기준"}]}`;
   return gemini(prompt);
 }
 
