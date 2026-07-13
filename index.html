@@ -355,44 +355,69 @@ async function gemini(prompt){
   return JSON.parse((d.text||'').replace(/```json|```/g,'').trim());
 }
 
-// ── KCISA 국립국어원 외래어 표기법 1순위 조회 ──
-// alternativeTitle이 입력 이름을 포함하는 항목만 사용 (엉뚱한 결과 방지)
+// ── 국립국어원 "외래어·로마자 용례" API 1순위 조회 ──
+// 정확 일치를 우선하고, 없으면 포함 일치로 폴백 (엉뚱한 결과 방지)
 async function callKCSIA(name){
   try{
     const r=await fetch(`/api/kcisa?keyword=${encodeURIComponent(name)}&numOfRows=20`);
     if(!r.ok)return null;
     const data=await r.json();
-    const raw=data?.response?.body?.items?.item;
-    if(!raw)return null;
-    const list=Array.isArray(raw)?raw:[raw];
+    // 실제 응답 구조: data.response.items (배열이 한 겹 더 감싸져 있는 경우도 방어)
+    let raw = data?.response?.items ?? data?.items ?? data?.response?.body?.items?.item;
+    if(!raw){
+      console.warn('[국립국어원] items 경로를 찾지 못함. 응답 최상위 키:', Object.keys(data||{}), data?.response ? Object.keys(data.response) : null);
+      return null;
+    }
+    let list=Array.isArray(raw)?raw:[raw];
+    // items가 [[{...},{...}]] 처럼 이중 배열로 오는 경우 평탄화
+    if(list.length && Array.isArray(list[0])) list=list.flat();
+
+    const nameLower=name.toLowerCase();
+    const valid=i=>i.korean_mark && i.lang_nm && i.srclang_mark;
+
+    // 정확 일치만 채택한다. "Anne-Sophie"처럼 입력값을 부분 포함하는 복합 인명은
+    // 전혀 다른 사람의 전체 성명이므로 절대 매칭시키지 않는다 (예: Sophie 검색 시
+    // "Pic, Anne-Sophie" 같은 무관한 유명인 성명이 잘못 붙는 것을 방지).
+    const candidates=list.filter(i=>valid(i) && i.srclang_mark.toLowerCase()===nameLower);
+    if(!candidates.length)return null;
+
     const seen=new Set();
-    const options=list
-      .filter(i=>
-        i.title &&
-        i.language &&
-        i.alternativeTitle &&
-        i.alternativeTitle.toLowerCase().includes(name.toLowerCase()) &&
-        !seen.has(i.language) &&
-        seen.add(i.language)
-      )
+    const options=candidates
+      .filter(i=>!seen.has(i.lang_nm) && seen.add(i.lang_nm))
       .slice(0,4)
       .map(i=>({
-        lang:i.language,
-        nativeLabel:i.language,
-        native:name,
-        korean:i.title,
-        note:'국립국어원 외래어 표기법 공식 기준'
+        lang:i.lang_nm,
+        nativeLabel:i.lang_nm,
+        native:i.srclang_mark,
+        korean:i.korean_mark,
+        note:'국립국어원 외래어 표기법 공식 용례'
       }));
-    console.log(`[KCISA] "${name}" → ${options.length}개 매칭`);
+    console.log(`[국립국어원] "${name}" → ${options.length}개 매칭`);
     return options.length?options:null;
   }catch(e){
-    console.warn('[KCISA] 조회 실패, Gemini로 폴백:',e.message);
+    console.warn('[국립국어원] 조회 실패, Gemini로 폴백:',e.message);
     return null;
   }
 }
 
+// ── 짧고 모호해 AI가 오작동하기 쉬운 이름은 사전 정의된 값으로 즉시 응답 ──
+// (지명 등으로 잘못 연상되는 걸 원천 차단)
+const SHORT_NAME_DICT = {
+  'an':  [{lang:'베트남어', nativeLabel:'Tiếng Việt', native:'An', korean:'안', note:'베트남어 흔한 인명'}],
+  'le':  [{lang:'베트남어', nativeLabel:'Tiếng Việt', native:'Le', korean:'레', note:'베트남어 성씨/인명'}],
+  'vu':  [{lang:'베트남어', nativeLabel:'Tiếng Việt', native:'Vu', korean:'부', note:'베트남어 성씨'}],
+  'ly':  [{lang:'베트남어', nativeLabel:'Tiếng Việt', native:'Ly', korean:'리', note:'베트남어 성씨'}],
+  'li':  [{lang:'중국어', nativeLabel:'中文', native:'Li', korean:'리', note:'중국어 흔한 성씨'}],
+  'wu':  [{lang:'중국어', nativeLabel:'中文', native:'Wu', korean:'우', note:'중국어 흔한 성씨'}],
+  'xu':  [{lang:'중국어', nativeLabel:'中文', native:'Xu', korean:'쉬', note:'중국어 흔한 성씨'}],
+  'ha':  [{lang:'베트남어', nativeLabel:'Tiếng Việt', native:'Ha', korean:'하', note:'베트남어 흔한 인명/성씨'}]
+};
+
 // ── Call 1: 언어 감지 ──────────────────
 async function callDetect(name){
+  const dictHit=SHORT_NAME_DICT[name.trim().toLowerCase()];
+  if(dictHit)return{options:dictHit};
+
   const kcisa=await callKCSIA(name);
   if(kcisa)return{options:kcisa};
 
