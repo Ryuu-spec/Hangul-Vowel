@@ -451,15 +451,19 @@ async function callDetect(name){
    - 이탈리아어: Michele (mi-KE-le) → 미켈레
    - 일본어: 헵번식 로마자 발음을 한국어 외래어 표기법으로 변환한 한글 (Haruki→하루키, Yuki→유키, Sakura→사쿠라)
    - 베트남어: 실제 발음 기준 한글 표기
+   - 중국어: 한어병음 발음을 한국어 외래어 표기법으로 변환한 한글 (Li→리, Wang→왕, Xu→쉬)
+   - 네덜란드어: 네덜란드어 실제 발음 기준 (g/ch=[x] 후설 마찰음 유의, Jan→얀, Gerrit→헤릿)
+   - 스웨덴어: 스웨덴어 실제 발음 기준 (Björn→비에른, Erik→에리크)
+   - 폴란드어: 폴란드어 실제 발음 기준 (w=[v], ł=[w], Wojciech→보이치에흐)
 2. native: 그 언어에서 실제로 쓰는 원어 철자 (영어Michael, 스페인어Miguel, 프랑스어Michel, 독일어Michael, 일본어는 한자 표기 예: 春樹)
    ※ 중요: 사용자가 어떤 언어의 철자를 입력하든 관계없이, 각 언어별로 그 언어에서 실제로
    쓰이는 고유 철자를 출력해야 합니다. 예를 들어 "Michel"을 입력해도 영어는 Michael,
    독일어는 Michael, 스페인어는 Miguel로 각각 다르게 출력해야 하며, 입력된 철자를
    그대로 복사해서는 안 됩니다. (즉 native는 입력값 복사가 아니라 언어별 정본 철자입니다)
-3. nativeLabel: 그 언어의 자국어 명칭 (English, Deutsch, Español, Français, Italiano, Português, Русский, 日本語, Tiếng Việt, ภาษาไทย, Bahasa Indonesia, Filipino)
+3. nativeLabel: 그 언어의 자국어 명칭 (English, Deutsch, Español, Français, Italiano, Português, Русский, 日本語, Tiếng Việt, ภาษาไทย, Bahasa Indonesia, 中文, Nederlands, Svenska, Polski)
 4. note: 표기 근거 한 줄 (간결하게, 전문 용어 최소화)
 
-지원 언어: 영어, 프랑스어, 독일어, 스페인어, 이탈리아어, 포르투갈어, 러시아어, 일본어, 베트남어, 태국어, 인도네시아어, 필리핀어, 아랍어, 터키어, 힌디어
+지원 언어: 영어, 프랑스어, 독일어, 스페인어, 이탈리아어, 포르투갈어, 러시아어, 일본어, 베트남어, 태국어, 인도네시아어, 중국어, 네덜란드어, 스웨덴어, 폴란드어
 
 예시 1) 입력이 "Michael"인 경우 — 반드시 아래 JSON만 응답(마크다운 없이):
 {"options":[{"lang":"영어","nativeLabel":"English","native":"Michael","korean":"마이클","note":"영미권 발음 기준"},{"lang":"독일어","nativeLabel":"Deutsch","native":"Michael","korean":"미하엘","note":"ch=[ç] 독일어 발음 기준"}]}
@@ -482,11 +486,10 @@ const ETYMOLOGY={
   '베트남어':'한월어(漢越語) 한자 의미 (Minh=明=밝다, Anh=英=영웅·빛나다, Lan=蘭=난초, Duc=德=덕, An=安=평안)',
   '태국어':'산스크리트어·팔리어 불교 어원 (Arisa=고귀한, Niran=영원한, Chai=승리, Pim=아름다운)',
   '인도네시아어':'아랍어·산스크리트어·말레이 고유어 어원 (Siti=귀부인, Budi=지혜, Dewi=여신)',
-  '필리핀어':'스페인어·산스크리트어·타갈로그 고유어 어원',
-  '아랍어':'아랍어 고유 어원 (Ahmad=가장 찬양받는, Fatima=금욕하는 자, Yusuf=신이 더하신다)',
-  '터키어':'투르크어·아랍어·페르시아어 어원',
-  '페르시아어':'페르시아 고유어·아랍어 어원',
-  '힌디어':'산스크리트어 어원 (Priya=사랑받는, Arjun=밝은, Divya=신성한)',
+  '중국어':'한자 의미 어원 (발음이 아닌 한자 뜻으로 해석, 明=밝다, 华=화려하다, 静=고요하다, 伟=위대하다)',
+  '네덜란드어':'게르만어·고대 프리지아어 어원',
+  '스웨덴어':'고대 노르드어·게르만어 어원',
+  '폴란드어':'슬라브어 고유 어원 (이름 자체에 뜻이 담긴 경우가 많음, 예: Wojciech=전사의 위안, Bogdan=신의 선물)',
 };
 
 async function callPoem(name, lang, korean, nativeLabel){
