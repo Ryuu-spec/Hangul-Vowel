@@ -366,8 +366,8 @@ function decompose(kor){
 }
 
 const EP='/api/gemini';
-async function gemini(prompt){
-  const r=await fetch(EP,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt})});
+async function gemini(prompt, cache){
+  const r=await fetch(EP,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt, cache:!!cache})});
   if(!r.ok)throw new Error('API 오류');
   const d=await r.json();
   return JSON.parse((d.text||'').replace(/```json|```/g,'').trim());
@@ -490,7 +490,7 @@ async function callDetect(name){
 
 예시 2) 입력이 "Michel"인 경우 (프랑스어 철자로 입력했더라도, 각 언어의 실제 정본 철자로 변환해야 함 — native를 입력값 그대로 복사하면 안 됨):
 {"options":[{"lang":"영어","nativeLabel":"English","native":"Michael","korean":"마이클","note":"영미권 발음 기준"},{"lang":"독일어","nativeLabel":"Deutsch","native":"Michael","korean":"미하엘","note":"ch=[ç] 독일어 발음 기준"},{"lang":"스페인어","nativeLabel":"Español","native":"Miguel","korean":"미겔","note":"mi-GEL 발음 기준"},{"lang":"프랑스어","nativeLabel":"Français","native":"Michel","korean":"미셸","note":"mi-SHEL 발음 기준"}]}`;
-  return gemini(prompt);
+  return gemini(prompt, true);
 }
 
 // ── Call 2: 개인화 카피 ────────────────
@@ -548,7 +548,7 @@ async function callPoem(name, lang, korean, nativeLabel, kanji){
 
 반드시 아래 JSON만 응답(마크다운·설명 없이):
 {"poem":"한 줄 문장","translation":"${targetLang}로 번역한 한 줄 문장"}`;
-  return gemini(prompt);
+  return gemini(prompt, false);
 }
 
 const LC=[
