@@ -285,6 +285,7 @@ body{display:flex;align-items:center;justify-content:center;font-family:'Noto Se
     </div>
     <p id="result-lang-badge" style="display:none;"></p>
     <p id="result-poem" style="font-family:'Noto Serif KR',serif;font-size:13px;line-height:1.85;color:rgba(18,18,17,.5);text-align:center;margin-top:14px;min-height:42px;letter-spacing:.02em;max-width:280px;opacity:0;transition:opacity .8s ease;"></p>
+    <p id="result-poem-translation" style="font-family:'Work Sans',sans-serif;font-size:11px;font-style:italic;line-height:1.6;color:rgba(18,18,17,.32);text-align:center;margin-top:6px;letter-spacing:.01em;max-width:280px;opacity:0;transition:opacity .8s ease;"></p>
   </div>
   <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:8px;">
     <div>
@@ -319,7 +320,7 @@ body{display:flex;align-items:center;justify-content:center;font-family:'Noto Se
 </div>
 
 <script>
-let curName='', curKor='', curLang='', curPoem='', curOptions=[], selectedIdx=-1;
+let curName='', curKor='', curLang='', curPoem='', curPoemTranslation='', curOptions=[], selectedIdx=-1;
 const sleep = ms => new Promise(r=>setTimeout(r,ms));
 const raf2  = ()  => new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
 
@@ -488,9 +489,10 @@ const ETYMOLOGY={
   '힌디어':'산스크리트어 어원 (Priya=사랑받는, Arjun=밝은, Divya=신성한)',
 };
 
-async function callPoem(name, lang, korean){
+async function callPoem(name, lang, korean, nativeLabel){
   const etym=ETYMOLOGY[lang]||'해당 문화권 고유 어원';
-  const prompt=`당신은 이름의 어원을 한국의 미학으로 해석하는 시인입니다.
+  const targetLang=nativeLabel||lang;
+  const prompt=`당신은 이름의 어원을 한국의 미학으로 해석하는 시인이자 번역가입니다.
 
 이름: "${name}" (${lang} 이름)
 한글 표기: "${korean}"
@@ -506,6 +508,7 @@ async function callPoem(name, lang, korean){
 - "${name}"의 어원적 의미를 먼저 파악한 뒤, 그 의미를 한국적 정서(한(恨), 여백, 결, 기운, 품)와 연결
 - 20자 내외 간결한 한 줄 문장
 - "${name}" 또는 "${korean}"으로 문장 시작 금지
+- 완성한 한국어 문장을 "${targetLang}"로 자연스럽게 번역한 문장도 함께 작성 (직역이 아닌 시적 의역, 원문과 같은 한 줄 길이감 유지)
 
 [언어별 예시]
 - Michael(영어·히브리 어원 "신과 같은 자") → "신의 기운을 품은 이름, 한글 획 속에 굳게 새겨집니다"
@@ -515,7 +518,7 @@ async function callPoem(name, lang, korean){
 - Arisa(태국 산스크리트 "고귀한") → "고귀한 기운이 한글의 획 속에 조용히 깃듭니다"
 
 반드시 아래 JSON만 응답(마크다운·설명 없이):
-{"poem":"한 줄 문장"}`;
+{"poem":"한 줄 문장","translation":"${targetLang}로 번역한 한 줄 문장"}`;
   return gemini(prompt);
 }
 
@@ -530,30 +533,8 @@ function shuffleLC(){
 
 function formatPoem(text){
   if(!text)return'';
-  if(text.length<=18)return text;
-  const igaMatch=text.match(/^(.+?[이가])\s+(.+)$/);
-  if(igaMatch&&igaMatch[1].length>=4&&igaMatch[2].length>=4){
-    return`${igaMatch[1]}<br>${igaMatch[2]}`;
-  }
-  const commaM=text.match(/^(.+?[,，])\s*(.+)$/);
-  if(commaM&&commaM[1].length>=4&&commaM[2].length>=4){
-    return`${commaM[1]}<br>${commaM[2]}`;
-  }
-  const hangulM=text.match(/^(.+?)\s+(한글.+)$/);
-  if(hangulM&&hangulM[1].length>=4&&hangulM[2].length>=4){
-    return`${hangulM[1]}<br>${hangulM[2]}`;
-  }
-  const josM=text.match(/^(.+?[을를속에의])\s+(.+)$/);
-  if(josM&&josM[1].length>=4&&josM[2].length>=4){
-    return`${josM[1]}<br>${josM[2]}`;
-  }
-  const mid=Math.floor(text.length/2);
-  const spaces=[...text.matchAll(/\s+/g)].map(m=>({i:m.index,len:m[0].length}));
-  if(spaces.length){
-    const best=spaces.reduce((a,b)=>Math.abs(a.i-mid)<Math.abs(b.i-mid)?a:b);
-    return text.slice(0,best.i)+'<br>'+text.slice(best.i+best.len);
-  }
-  return text;
+  if(!/[,，]/.test(text))return text;
+  return text.replace(/[,，]\s*/g,m=>m.trim()+'<br>');
 }
 
 async function detectLanguages(){
@@ -667,6 +648,8 @@ async function runProcess(opt){
   document.getElementById('result-lang-badge').textContent=(opt.nativeLabel||opt.lang||'')+ ' version';
   document.getElementById('result-poem').style.opacity='0';
   document.getElementById('result-poem').textContent='';
+  document.getElementById('result-poem-translation').style.opacity='0';
+  document.getElementById('result-poem-translation').textContent='';
   show('pg-load');
   const msgs=['Assembling identity...','Reading the strokes...','Finding your essence...'];
   let mi=0;
@@ -685,22 +668,29 @@ async function runProcess(opt){
     };
     let poemRes;
     try{
-      poemRes=await callPoem(curName, curLang, curKor);
+      poemRes=await callPoem(curName, curLang, curKor, opt.nativeLabel);
       curPoem=poemRes.poem||'';
+      curPoemTranslation=poemRes.translation||'';
       if(!curPoem){
-        poemRes=await callPoem(curName, curLang, curKor);
+        poemRes=await callPoem(curName, curLang, curKor, opt.nativeLabel);
         curPoem=poemRes.poem||'';
+        curPoemTranslation=poemRes.translation||'';
       }
     }catch(pe){
       console.warn('카피 생성 실패, 재시도:',pe);
       try{
-        poemRes=await callPoem(curName, curLang, curKor);
+        poemRes=await callPoem(curName, curLang, curKor, opt.nativeLabel);
         curPoem=poemRes.poem||'';
+        curPoemTranslation=poemRes.translation||'';
       }catch(pe2){
         curPoem='';
+        curPoemTranslation='';
       }
     }
-    if(!curPoem) curPoem=FALLBACK_POEMS[curLang]||'이름에 깃든 기운이 한글의 결을 따라 흐릅니다.';
+    if(!curPoem){
+      curPoem=FALLBACK_POEMS[curLang]||'이름에 깃든 기운이 한글의 결을 따라 흐릅니다.';
+      curPoemTranslation='';
+    }
     clearInterval(ct); clearInterval(mt);
     show('pg-anim');
     await sleep(200);
@@ -713,8 +703,11 @@ async function runProcess(opt){
     const pEl=document.getElementById('result-poem');
     pEl.innerHTML=formatPoem(curPoem);
     document.getElementById('cap-poem').textContent=curPoem;
+    const tEl=document.getElementById('result-poem-translation');
+    tEl.textContent=curPoemTranslation;
     await sleep(300);
     pEl.style.opacity='1';
+    if(curPoemTranslation) tEl.style.opacity='1';
   }catch(e){
     clearInterval(ct); clearInterval(mt);
     show('pg-pick');
@@ -808,10 +801,12 @@ async function saveCard(){
 }
 
 function startOver(){
-  curName=''; curKor=''; curLang=''; curPoem=''; curOptions=[]; selectedIdx=-1;
+  curName=''; curKor=''; curLang=''; curPoem=''; curPoemTranslation=''; curOptions=[]; selectedIdx=-1;
   document.getElementById('nf').value='';
   document.getElementById('result-poem').textContent='';
   document.getElementById('result-poem').style.opacity='0';
+  document.getElementById('result-poem-translation').textContent='';
+  document.getElementById('result-poem-translation').style.opacity='0';
   document.getElementById('cap-poem').textContent='';
   document.getElementById('pick-cards').innerHTML='';
   resetAnimElements();
