@@ -29,12 +29,13 @@ function pickSafeFallback() {
   return SAFE_FALLBACKS[Math.floor(Math.random() * SAFE_FALLBACKS.length)];
 }
 
-// ── 형식 검증 (숫자만/문자 없음/1자 이하, index.html과 동일한 검사) ──
+// ── 형식 검증 (숫자만/문자 없음/1자 이하/로마자 외 문자 포함, index.html과 동일한 검사) ──
 function isInvalidNameFormat(name) {
   const trimmed = String(name || "").trim();
   if (trimmed.length <= 1) return true;
   if (/^[0-9]+$/.test(trimmed)) return true;
-  if (!/[a-zA-Z가-힣]/.test(trimmed)) return true;
+  if (!/[a-zA-Z]/.test(trimmed)) return true;
+  if (/[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(trimmed)) return true;
   return false;
 }
 
@@ -46,7 +47,7 @@ const KOREAN_PROFANITY_ROMANIZED_LIST = [
   "sibal", "shibal", "ssibal", "sibalnom", "sibalnyeon", "gaesaekki", "byeongshin", "byungshin", "jokka", "saekki"
 ];
 const KOREAN_PROFANITY_LIST = [
-  "씨발", "시발", "씨발놈", "씨발년", "개새끼", "병신", "좆까", "새끼", "미친놈", "좆"
+  "씨발", "시발", "씨발놈", "씨발년", "개새끼", "병신", "좆까", "새끼", "미친놈", "좆", "남미새"
 ];
 
 function normalizeForProfanityCheck(text) {
@@ -59,6 +60,14 @@ function containsProfanity(name) {
   return ENGLISH_PROFANITY_LIST.some((w) => normalized.includes(w))
       || KOREAN_PROFANITY_ROMANIZED_LIST.some((w) => normalized.includes(w))
       || KOREAN_PROFANITY_LIST.some((w) => normalized.includes(w));
+}
+
+// Call 1(언어 감지) 응답의 "korean" 필드 전용 검사. 로마자 입력(예: "Nammisae")이 형식/부적절어
+// 필터를 통과하더라도, Gemini가 그 발음을 한글 비속어("남미새")로 되돌려주는 우회를 막는다.
+function containsKoreanProfanityWord(text) {
+  const normalized = normalizeForProfanityCheck(text);
+  if (!normalized) return false;
+  return KOREAN_PROFANITY_LIST.some((w) => normalized.includes(w));
 }
 
 // 프롬프트에 박혀 있는 `이름 "..."` / `이름: "..."` 패턴에서 사용자가 입력한 이름을 최대한 복원한다.
@@ -156,6 +165,27 @@ export default async function handler(req, res) {
       const safeJson = buildSafeFallbackJson(type, prompt);
       text = JSON.stringify(safeJson || { poem: pickSafeFallback() });
     }
+
+    // Call 1(언어 감지) 응답의 각 옵션 korean 필드를 재검사해, 부적절어로 판정되는 옵션은
+    // 제외한다. 모든 옵션이 걸리면 options가 빈 배열이 되어 클라이언트의 "옵션 없음" 처리
+    // (재시도 후 alert)로 자연스럽게 흡수된다 — 즉 응답 전체가 "지원 불가"로 처리됨.
+    // 이 필터링은 캐시에 쓰기 전에 이루어지므로, 오염된 응답이 캐시에 남지 않는다.
+    if (type === "detect") {
+      try {
+        const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
+        if (Array.isArray(parsed.options)) {
+          const filteredOptions = parsed.options.filter((opt) => !containsKoreanProfanityWord(opt && opt.korean));
+          if (filteredOptions.length !== parsed.options.length) {
+            console.error("[gemini korean profanity filter] blocked option(s) with profane korean field");
+            text = JSON.stringify({ ...parsed, options: filteredOptions });
+          }
+        }
+      } catch (err) {
+        // Gemini 응답이 유효한 JSON이 아니면 그대로 두고, 클라이언트의 JSON.parse 실패
+        // 경로(재시도/alert)가 처리하게 둔다.
+      }
+    }
+
     const result = { text };
 
     if (useCache) {

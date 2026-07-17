@@ -449,6 +449,10 @@ async function callDetect(name){
 - 최대 4개까지만 반환
 
 [절대 금지]
+- lang 필드는 반드시 아래 15개 언어 중 하나여야 합니다. 이 목록에 없는 언어(예: "한국어", "korean",
+  "Korean" 등)를 절대 만들어내지 마세요:
+  영어, 프랑스어, 독일어, 스페인어, 이탈리아어, 포르투갈어, 러시아어, 일본어, 베트남어, 태국어,
+  인도네시아어, 중국어, 네덜란드어, 스웨덴어, 폴란드어
 - "korean" 필드에 한자(漢字)·가나(히라가나·가타카나)·로마자 사용 금지 — 반드시 한글(가-힣)만 사용
   예: Haruki → korean: "하루키" (O), korean: "春樹" (X), korean: "ハルキ" (X)
 - Sophie·Michael 등 서양 이름이 일본에서 외래어로 쓰인다는 이유로 일본어 옵션에 포함 금지
@@ -573,12 +577,13 @@ function formatPoem(text){
   return escaped.replace(/[,，]\s*/g,m=>m.trim()+'<br>');
 }
 
-// ── 형식 검증 (숫자만/문자 없음/1자 이하) ──────────
+// ── 형식 검증 (숫자만/문자 없음/1자 이하/로마자 외 문자 포함) ──────────
 function isInvalidNameFormat(name){
   const trimmed=String(name||'').trim();
   if(trimmed.length<=1)return true;
   if(/^[0-9]+$/.test(trimmed))return true;
-  if(!/[a-zA-Z가-힣]/.test(trimmed))return true;
+  if(!/[a-zA-Z]/.test(trimmed))return true;
+  if(/[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(trimmed))return true;
   return false;
 }
 
@@ -590,7 +595,7 @@ const KOREAN_PROFANITY_ROMANIZED_LIST=[
   'sibal','shibal','ssibal','sibalnom','sibalnyeon','gaesaekki','byeongshin','byungshin','jokka','saekki'
 ];
 const KOREAN_PROFANITY_LIST=[
-  '씨발','시발','씨발놈','씨발년','개새끼','병신','좆까','새끼','미친놈','좆'
+  '씨발','시발','씨발놈','씨발년','개새끼','병신','좆까','새끼','미친놈','좆','남미새'
 ];
 function normalizeForProfanityCheck(text){
   return String(text||'').toLowerCase().replace(/[^a-z0-9가-힣]/g,'');
