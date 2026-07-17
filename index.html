@@ -303,7 +303,7 @@ body{display:flex;align-items:center;justify-content:center;font-family:'Noto Se
     </div>
     <p id="result-lang-badge" style="display:none;"></p>
     <p id="result-poem" style="font-family:'Noto Serif KR',serif;font-size:13px;line-height:1.85;color:rgba(18,18,17,.5);text-align:center;margin-top:14px;min-height:42px;letter-spacing:.02em;max-width:280px;word-break:keep-all;opacity:0;transition:opacity .8s ease;"></p>
-    <p id="result-poem-translation" style="font-family:'Work Sans',sans-serif;font-size:11px;font-style:italic;line-height:1.6;color:rgba(18,18,17,.32);text-align:center;margin-top:6px;letter-spacing:.01em;max-width:92%;white-space:normal;opacity:0;transition:opacity .8s ease;"></p>
+    <p id="result-poem-translation" style="font-family:'Work Sans',sans-serif;font-size:11px;font-style:italic;line-height:1.6;color:rgba(18,18,17,.32);text-align:center;margin-top:6px;letter-spacing:.01em;max-width:92%;white-space:normal;word-break:keep-all;opacity:0;transition:opacity .8s ease;"></p>
   </div>
   <div style="display:flex;justify-content:space-between;align-items:flex-end;padding-bottom:8px;">
     <div>
@@ -545,6 +545,7 @@ async function callPoem(name, lang, korean, nativeLabel, kanji){
   특정 형식을 반복하지 말고, 그 문장의 흐름에 맞는 자연스러운 지점에서 끊으세요.
 - "${name}" 또는 "${korean}"으로 문장 시작 금지
 - 완성한 한국어 문장을 "${targetLang}"로 자연스럽게 번역한 문장도 함께 작성 (직역이 아닌 시적 의역, 원문과 같은 한 줄 길이감 유지)
+- 번역 문장도 의미상 자연스러운 지점에 쉼표를 하나 포함해서, 원문 한국어 시와 유사하게 리듬감 있게 작성하세요.
 
 [언어별 예시]
 - Michael(영어·히브리 어원 "신과 같은 자") → "신의 기운을 품은 이름, 한글 획 속에 굳게 새겨집니다"
@@ -826,7 +827,7 @@ async function runProcess(opt){
     pEl.innerHTML=formatPoem(curPoem);
     document.getElementById('cap-poem').textContent=curPoem;
     const tEl=document.getElementById('result-poem-translation');
-    tEl.textContent=curPoemTranslation;
+    tEl.innerHTML=formatPoem(curPoemTranslation);
     await sleep(300);
     pEl.style.opacity='1';
     if(curPoemTranslation) tEl.style.opacity='1';
