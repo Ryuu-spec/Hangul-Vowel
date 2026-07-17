@@ -366,8 +366,8 @@ function decompose(kor){
 }
 
 const EP='/api/gemini';
-async function gemini(prompt, cache){
-  const r=await fetch(EP,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt, cache:!!cache})});
+async function gemini(prompt, cache, type){
+  const r=await fetch(EP,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt, cache:!!cache, type})});
   if(!r.ok)throw new Error('API 오류');
   const d=await r.json();
   return JSON.parse((d.text||'').replace(/```json|```/g,'').trim());
@@ -490,7 +490,7 @@ async function callDetect(name){
 
 예시 2) 입력이 "Michel"인 경우 (프랑스어 철자로 입력했더라도, 각 언어의 실제 정본 철자로 변환해야 함 — native를 입력값 그대로 복사하면 안 됨):
 {"options":[{"lang":"영어","nativeLabel":"English","native":"Michael","korean":"마이클","note":"영미권 발음 기준"},{"lang":"독일어","nativeLabel":"Deutsch","native":"Michael","korean":"미하엘","note":"ch=[ç] 독일어 발음 기준"},{"lang":"스페인어","nativeLabel":"Español","native":"Miguel","korean":"미겔","note":"mi-GEL 발음 기준"},{"lang":"프랑스어","nativeLabel":"Français","native":"Michel","korean":"미셸","note":"mi-SHEL 발음 기준"}]}`;
-  return gemini(prompt, true);
+  return gemini(prompt, true, 'detect');
 }
 
 // ── Call 2: 개인화 카피 ────────────────
@@ -548,7 +548,7 @@ async function callPoem(name, lang, korean, nativeLabel, kanji){
 
 반드시 아래 JSON만 응답(마크다운·설명 없이):
 {"poem":"한 줄 문장","translation":"${targetLang}로 번역한 한 줄 문장"}`;
-  return gemini(prompt, false);
+  return gemini(prompt, false, 'poem');
 }
 
 const LC=[
@@ -560,10 +560,47 @@ function shuffleLC(){
   if(el)el.innerHTML=Array.from({length:6},()=>`<span>${LC[Math.floor(Math.random()*LC.length)]}</span>`).join('');
 }
 
+function escapeHtml(text){
+  return String(text).replace(/[&<>"']/g,c=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
 function formatPoem(text){
   if(!text)return'';
-  if(!/[,，]/.test(text))return text;
-  return text.replace(/[,，]\s*/g,m=>m.trim()+'<br>');
+  const escaped=escapeHtml(text);
+  if(!/[,，]/.test(escaped))return escaped;
+  return escaped.replace(/[,，]\s*/g,m=>m.trim()+'<br>');
+}
+
+// ── 형식 검증 (숫자만/문자 없음/1자 이하) ──────────
+function isInvalidNameFormat(name){
+  const trimmed=String(name||'').trim();
+  if(trimmed.length<=1)return true;
+  if(/^[0-9]+$/.test(trimmed))return true;
+  if(!/[a-zA-Z가-힣]/.test(trimmed))return true;
+  return false;
+}
+
+// ── 부적절 입력 필터 (영문 이름 입력이 기본이지만, 한글을 그대로 붙여넣는 경우까지 방어) ──
+const ENGLISH_PROFANITY_LIST=[
+  'fuck','shit','bitch','asshole','bastard','cunt','dick','pussy','whore','slut','cock','douchebag','motherfucker'
+];
+const KOREAN_PROFANITY_ROMANIZED_LIST=[
+  'sibal','shibal','ssibal','sibalnom','sibalnyeon','gaesaekki','byeongshin','byungshin','jokka','saekki'
+];
+const KOREAN_PROFANITY_LIST=[
+  '씨발','시발','씨발놈','씨발년','개새끼','병신','좆까','새끼','미친놈','좆'
+];
+function normalizeForProfanityCheck(text){
+  return String(text||'').toLowerCase().replace(/[^a-z0-9가-힣]/g,'');
+}
+function containsProfanity(name){
+  const normalized=normalizeForProfanityCheck(name);
+  if(!normalized)return false;
+  return ENGLISH_PROFANITY_LIST.some(w=>normalized.includes(w))
+      || KOREAN_PROFANITY_ROMANIZED_LIST.some(w=>normalized.includes(w))
+      || KOREAN_PROFANITY_LIST.some(w=>normalized.includes(w));
 }
 
 async function detectLanguages(){
@@ -574,6 +611,14 @@ async function detectLanguages(){
     alert(`이름만 입력해 주세요. "${firstWord}"로 진행합니다.`);
     name=firstWord;
     document.getElementById('nf').value=name;
+  }
+  if(isInvalidNameFormat(name)){
+    alert('이름을 정확히 입력해주세요 😅');
+    return;
+  }
+  if(containsProfanity(name)){
+    alert('부적절한 이름은 사용할 수 없어요 😅 다른 이름으로 시도해주세요');
+    return;
   }
   curName=name;
   const detectName=document.getElementById('detect-name');
