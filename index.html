@@ -178,6 +178,7 @@ body{display:flex;align-items:center;justify-content:center;font-family:'Noto Se
       <span onclick="setN('Haruki')" style="font-family:'Playfair Display',serif;font-size:13px;color:var(--muted);border-bottom:1px dotted var(--muted);cursor:pointer;">Haruki</span>
       <span onclick="setN('Minh')" style="font-family:'Playfair Display',serif;font-size:13px;color:var(--muted);border-bottom:1px dotted var(--muted);cursor:pointer;">Minh</span>
     </div>
+    <p id="name-msg" style="text-align:center;font-family:'Work Sans',sans-serif;font-size:12px;color:rgba(18,18,17,.55);margin-top:20px;opacity:0;transition:opacity .6s ease;"></p>
   </div>
   <div style="padding:16px 24px 48px;flex-shrink:0;width:100%;">
     <button class="btn btn-dark" id="discover-btn" onclick="detectLanguages()">Discover Meaning</button>
@@ -608,7 +609,21 @@ function containsProfanity(name){
       || KOREAN_PROFANITY_LIST.some(w=>normalized.includes(w));
 }
 
+function showNameMessage(msg){
+  const el=document.getElementById('name-msg');
+  if(!el)return;
+  el.textContent=msg;
+  el.style.opacity='1';
+}
+function clearNameMessage(){
+  const el=document.getElementById('name-msg');
+  if(!el)return;
+  el.style.opacity='0';
+  el.textContent='';
+}
+
 async function detectLanguages(){
+  clearNameMessage();
   let name=document.getElementById('nf').value.trim();
   if(!name)return;
   if(/\s/.test(name)){
@@ -622,7 +637,7 @@ async function detectLanguages(){
     return;
   }
   if(containsProfanity(name)){
-    alert('부적절한 이름은 사용할 수 없어요 😅 다른 이름으로 시도해주세요');
+    alert('이 이름은 현재 지원되지 않아요 😅 다른 표기로 시도해주세요');
     return;
   }
   curName=name;
@@ -638,7 +653,7 @@ async function detectLanguages(){
       await handleDetectResult(res2);
     }catch(e2){
       show('pg-name');
-      alert('잠시 후 다시 시도해 주세요.');
+      showNameMessage('이 이름은 현재 지원되지 않아요 😅 다른 표기로 시도해주세요');
     }
   }
 }

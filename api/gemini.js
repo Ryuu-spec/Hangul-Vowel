@@ -79,7 +79,9 @@ function extractNameFromPrompt(prompt) {
 
 // 안전 필터에 걸렸을 때, 각 호출이 기대하는 JSON 스키마 그대로 안전한 값을 채워 반환한다.
 // (파싱 에러를 유발해 기존 재시도/alert 로직으로 새지 않도록, 정상 응답과 동일한 모양을 유지)
-function buildSafeFallbackJson(type, prompt) {
+// note는 호출부에서 상황에 맞는 문구로 덮어쓸 수 있다 (형식 검증/부적절어 검사가 서로 다른
+// 문구를 쓰기 때문).
+function buildSafeFallbackJson(type, prompt, note = "안전한 기본값으로 대체되었습니다.") {
   if (type === "poem") {
     return { poem: pickSafeFallback() };
   }
@@ -92,7 +94,7 @@ function buildSafeFallbackJson(type, prompt) {
           nativeLabel: "알 수 없음",
           native: name,
           korean: "이름",
-          note: "안전한 기본값으로 대체되었습니다."
+          note
         }
       ]
     };
@@ -117,9 +119,14 @@ export default async function handler(req, res) {
   // 클라이언트 필터를 우회해 API를 직접 호출하는 경우에 대비한 서버단 이중 방어.
   // 걸리면 Gemini를 호출하지 않고 바로 안전한 대체 콘텐츠를 반환한다.
   const extractedName = extractNameFromPrompt(prompt);
-  if (isInvalidNameFormat(extractedName) || containsProfanity(extractedName)) {
-    console.error("[gemini input validation] blocked before calling Gemini");
+  if (isInvalidNameFormat(extractedName)) {
+    console.error("[gemini input validation] blocked before calling Gemini (invalid format)");
     const safeJson = buildSafeFallbackJson(type, prompt);
+    return res.status(200).json({ text: JSON.stringify(safeJson || { poem: pickSafeFallback() }) });
+  }
+  if (containsProfanity(extractedName)) {
+    console.error("[gemini input validation] blocked before calling Gemini (profanity)");
+    const safeJson = buildSafeFallbackJson(type, prompt, "이 이름은 현재 지원되지 않아요 😅 다른 표기로 시도해주세요");
     return res.status(200).json({ text: JSON.stringify(safeJson || { poem: pickSafeFallback() }) });
   }
 
