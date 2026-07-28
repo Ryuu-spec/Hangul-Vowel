@@ -1,9 +1,11 @@
 {
   "regions": ["icn1"],
   "crons": [
-    { "path": "/api/cron/sync-kcisa-names", "schedule": "0 19 * * 0" }
+    { "path": "/api/cron/sync-kcisa-names", "schedule": "0 19 * * 0" },
+    { "path": "/api/cron/resume-kcisa-sync", "schedule": "0 12 * * *" }
   ],
   "functions": {
-    "api/cron/sync-kcisa-names.js": { "maxDuration": 30 }
+    "api/cron/sync-kcisa-names.js": { "maxDuration": 60 },
+    "api/cron/resume-kcisa-sync.js": { "maxDuration": 60 }
   }
 }

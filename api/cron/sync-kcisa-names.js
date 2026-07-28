@@ -20,8 +20,15 @@
 //   kcisa:names:keyset                  → SET, 현재 채워진 모든 이름 키
 //     (다음 주 재동기화 시작 시 이 목록으로 이전 데이터를 깨끗이 지움)
 //   kcisa:sync:meta                     → HASH, 진행 상태
-//     (status/currentPage/totalPages/processedCount/totalCount/
-//      startedAt/finishedAt/lastError)
+//     (status: running/done/error/stalled, currentPage/totalPages/
+//      processedCount/totalCount/startedAt/finishedAt/lastError/
+//      lastProgressAt)
+//
+// [실측 발견 — 체이닝이 완전히 안정적이지 않음] 첫 실행(2026-07-28)에서
+// waitUntil로 넘긴 다음 페이지 트리거가 6번 중 1번꼴로 조용히(에러 없이)
+// 끊기는 현상을 확인함. 각 트리거를 최대 3회 재시도하도록 보강했지만,
+// 그래도 다 실패하면 status를 'stalled'로 남기고 resume-kcisa-sync.js
+// (하루 1회 워치독 cron)가 lastProgressAt을 보고 이어받아 재개한다.
 //
 // [보안] Vercel이 vercel.json의 crons 경로를 호출할 때 CRON_SECRET
 // 환경변수가 설정되어 있으면 자동으로 `Authorization: Bearer <CRON_SECRET>`
@@ -94,6 +101,26 @@ function selfUrl(req, pageNo) {
   return `${proto}://${host}/api/cron/sync-kcisa-names?pageNo=${pageNo}`;
 }
 
+// 다음 페이지 트리거는 첫 실행에서 약 6번 중 1번꼴로 조용히 죽는 현상이
+// 실측 확인됨(에러 없이 status만 'running'에 멈춤). res.ok까지 확인하고,
+// 실패하면 짧은 간격으로 재시도한다. 그래도 다 실패하면 status를
+// 'stalled'로 남겨(에러가 아니라 별도 상태) resume-kcisa-sync 워치독이
+// 감지해 이어받을 수 있게 한다.
+async function triggerNextPage(req, secret, nextPageNo, attempts = 3) {
+  const nextUrl = selfUrl(req, nextPageNo);
+  for (let i = 1; i <= attempts; i++) {
+    try {
+      const r = await fetch(nextUrl, { headers: { Authorization: `Bearer ${secret}` } });
+      if (r.ok) return true;
+      console.error(`[kcisa sync] 다음 페이지(${nextPageNo}) 트리거 실패 (HTTP ${r.status}), 시도 ${i}/${attempts}`);
+    } catch (err) {
+      console.error(`[kcisa sync] 다음 페이지(${nextPageNo}) 트리거 예외, 시도 ${i}/${attempts}:`, err.message);
+    }
+    if (i < attempts) await new Promise((resolve) => setTimeout(resolve, 1500));
+  }
+  return false;
+}
+
 export default async function handler(req, res) {
   const secret = process.env.CRON_SECRET;
   if (!secret) {
@@ -113,6 +140,8 @@ export default async function handler(req, res) {
   try {
     if (pageNo === 1) {
       await clearPreviousIndex();
+      await redis.del('kcisa:sync:processedPages');
+      await redis.sadd('kcisa:sync:processedPages', 1);
       await redis.hset('kcisa:sync:meta', {
         status: 'running',
         startedAt: new Date().toISOString(),
@@ -122,38 +151,68 @@ export default async function handler(req, res) {
         processedCount: 0,
         totalCount: '',
         lastError: '',
+        lastProgressAt: new Date().toISOString(),
       });
+    } else {
+      // 워치독(resume-kcisa-sync)이 sync-kcisa-names 자체의 waitUntil 체인과
+      // 경합해 같은 페이지를 두 번 트리거할 수 있어(각각 다음 페이지로 이어감),
+      // SADD 자체가 원자적(atomic)이므로 이걸로 "이 페이지를 처리할 권리"를
+      // 선점한다 — 반환값 0이면 이미 누군가(혹은 이전 시도)가 먼저 처리했거나
+      // 처리 중이라는 뜻이라 여기서 중단(TOCTOU 경쟁 없이 안전).
+      const claimed = await redis.sadd('kcisa:sync:processedPages', pageNo);
+      if (!claimed) {
+        const meta = await redis.hgetall('kcisa:sync:meta');
+        return res.status(200).json({
+          pageNo,
+          skipped: true,
+          reason: '이미 처리된 페이지 (중복 트리거)',
+          totalPages: Number(meta?.totalPages) || 0,
+          totalCount: Number(meta?.totalCount) || 0,
+          processedCount: Number(meta?.processedCount) || 0,
+          done: meta?.status === 'done',
+        });
+      }
     }
 
-    const response = await fetchPage(serviceKey, pageNo);
+    // 이 지점부터 실패하면 "선점"만 해두고 실제 데이터는 기록되지 않은
+    // 상태이므로, 다음 재시도가 다시 시도할 수 있도록 선점을 반납한다.
+    let response;
+    try {
+      response = await fetchPage(serviceKey, pageNo);
+      const items = response.items || [];
+
+      // 페이지 안의 항목을 이름별로 묶어 파이프라인 한 번에 기록 (Redis
+      // 왕복 횟수를 페이지당 1회로 줄임 — read-modify-write 대신 RPUSH로
+      // 항상 append만 하므로 순서 상관없이 안전)
+      if (items.length) {
+        const pipeline = redis.pipeline();
+        const seenKeys = new Set();
+        for (const item of items) {
+          const key = normalizeKey(item.srclang_mark);
+          if (!key) continue;
+          pipeline.rpush(`kcisa:name:${key}`, JSON.stringify({
+            korean_mark: trimField(item.korean_mark),
+            lang_nm: trimField(item.lang_nm),
+            guk_nm: trimField(item.guk_nm),
+            mean: trimField(item.mean),
+            source: trimField(item.source),
+            example_no: item.example_no,
+          }));
+          if (!seenKeys.has(key)) {
+            pipeline.sadd('kcisa:names:keyset', key);
+            seenKeys.add(key);
+          }
+        }
+        await pipeline.exec();
+      }
+    } catch (err) {
+      await redis.srem('kcisa:sync:processedPages', pageNo).catch(() => {});
+      throw err;
+    }
+
     const items = response.items || [];
     const totalCount = response.totalcount || 0;
     const totalPages = Math.max(1, Math.ceil(totalCount / NUM_OF_ROWS));
-
-    // 페이지 안의 항목을 이름별로 묶어 파이프라인 한 번에 기록 (Redis
-    // 왕복 횟수를 페이지당 1회로 줄임 — read-modify-write 대신 RPUSH로
-    // 항상 append만 하므로 순서 상관없이 안전)
-    if (items.length) {
-      const pipeline = redis.pipeline();
-      const seenKeys = new Set();
-      for (const item of items) {
-        const key = normalizeKey(item.srclang_mark);
-        if (!key) continue;
-        pipeline.rpush(`kcisa:name:${key}`, JSON.stringify({
-          korean_mark: trimField(item.korean_mark),
-          lang_nm: trimField(item.lang_nm),
-          guk_nm: trimField(item.guk_nm),
-          mean: trimField(item.mean),
-          source: trimField(item.source),
-          example_no: item.example_no,
-        }));
-        if (!seenKeys.has(key)) {
-          pipeline.sadd('kcisa:names:keyset', key);
-          seenKeys.add(key);
-        }
-      }
-      await pipeline.exec();
-    }
 
     const meta = await redis.hgetall('kcisa:sync:meta');
     const processedCount = (Number(meta?.processedCount) || 0) + items.length;
@@ -166,13 +225,20 @@ export default async function handler(req, res) {
       processedCount,
       status: isDone ? 'done' : 'running',
       finishedAt: isDone ? new Date().toISOString() : '',
+      lastProgressAt: new Date().toISOString(),
     });
 
     if (!isDone) {
-      const nextUrl = selfUrl(req, pageNo + 1);
-      waitUntil(
-        fetch(nextUrl, { headers: { Authorization: `Bearer ${secret}` } }).catch(() => {})
-      );
+      waitUntil((async () => {
+        const ok = await triggerNextPage(req, secret, pageNo + 1);
+        if (!ok) {
+          console.error(`[kcisa sync] 페이지 ${pageNo + 1} 트리거 3회 재시도 모두 실패, stalled로 표시`);
+          await redis.hset('kcisa:sync:meta', {
+            status: 'stalled',
+            lastError: `페이지 ${pageNo + 1} 트리거 실패 (재시도 3회 소진)`,
+          }).catch(() => {});
+        }
+      })());
     }
 
     return res.status(200).json({ pageNo, totalPages, totalCount, processedCount, done: isDone });
